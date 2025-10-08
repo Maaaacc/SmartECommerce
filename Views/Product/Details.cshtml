@@ -1,0 +1,24 @@
+﻿@model SmartECommerce.Models.Product
+
+@{
+    ViewData["Title"] = "Product Details";
+}
+
+<div class="container mt-4">
+    <h2>@Model.Name</h2>
+    <div class="row">
+        <div class="col-md-6">
+            <img src="@Url.Content($"~/images/products/{Model.ImageUrl}")" class="img-fluid rounded" alt="@Model.Name" />
+        </div>
+        <div class="col-md-6">
+            <h4>Description</h4>
+            <p>@Model.Description</p>
+
+            <h4>Price: <span class="text-success fw-bold">$@Model.Price</span></h4>
+            <h5>Stock Available: @Model.Stock</h5>
+
+            <!-- Add to Cart button to be integrated after cart is ready -->
+            <button class="btn btn-primary" disabled> Add to Cart (Coming Soon) </button>
+        </div>
+    </div>
+</div>
