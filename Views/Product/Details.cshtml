@@ -16,9 +16,11 @@
 
             <h4>Price: <span class="text-success fw-bold">$@Model.Price</span></h4>
             <h5>Stock Available: @Model.Stock</h5>
-
-            <!-- Add to Cart button to be integrated after cart is ready -->
-            <button class="btn btn-primary" disabled> Add to Cart (Coming Soon) </button>
+            
+            <form asp-controller="Cart" asp-action="AddToCart" method="post" class="d-inline">
+                <input type="hidden" name="productId" value="@Model.Id" />
+                <button type="submit" class="btn btn-outline-primary">Add to Cart</button>
+            </form>
         </div>
     </div>
 </div>

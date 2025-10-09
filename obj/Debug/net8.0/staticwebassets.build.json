@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "9/ewKMp1AaEZhbB4prmFD095W9FzR/BXpVWpz8WxNtw=",
+  "Hash": "EoxwxtRDQIdCmv9nrQg7v3Tj6wdPUD7EWvQKQjYe0Ag=",
   "Source": "SmartECommerce",
   "BasePath": "_content/SmartECommerce",
   "Mode": "Default",
@@ -1250,6 +1250,25 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\images\\products\\0ded43d2-8caf-46e0-a003-c73da612764b.png"
+    },
+    {
+      "Identity": "E:\\VS-Projects\\SmartECommerce\\SmartECommerce\\wwwroot\\images\\products\\42b8a220-c1df-486f-b788-aaf5736c32ec.png",
+      "SourceId": "SmartECommerce",
+      "SourceType": "Discovered",
+      "ContentRoot": "E:\\VS-Projects\\SmartECommerce\\SmartECommerce\\wwwroot\\",
+      "BasePath": "_content/SmartECommerce",
+      "RelativePath": "images/products/42b8a220-c1df-486f-b788-aaf5736c32ec.png",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\images\\products\\42b8a220-c1df-486f-b788-aaf5736c32ec.png"
     },
     {
       "Identity": "E:\\VS-Projects\\SmartECommerce\\SmartECommerce\\wwwroot\\images\\products\\7845a703-eb81-4b3f-a052-8086743d4c2f.jpg",

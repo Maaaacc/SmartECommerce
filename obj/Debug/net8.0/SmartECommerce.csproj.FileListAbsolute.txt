@@ -291,3 +291,4 @@ E:\VS-Projects\SmartECommerce\SmartECommerce\obj\Debug\net8.0\refint\SmartEComme
 E:\VS-Projects\SmartECommerce\SmartECommerce\obj\Debug\net8.0\SmartECommerce.pdb
 E:\VS-Projects\SmartECommerce\SmartECommerce\obj\Debug\net8.0\SmartECommerce.genruntimeconfig.cache
 E:\VS-Projects\SmartECommerce\SmartECommerce\obj\Debug\net8.0\ref\SmartECommerce.dll
+E:\VS-Projects\SmartECommerce\SmartECommerce\obj\Debug\net8.0\SmartECommerce.sourcelink.json

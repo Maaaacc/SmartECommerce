@@ -1,0 +1,100 @@
+﻿@model IEnumerable<SmartECommerce.Models.CartItem>
+
+@{
+    ViewData["Title"] = "Your Cart";
+}
+
+<div class="container mt-4">
+    <h2>@ViewData["Title"]</h2>
+
+    @if (!Model.Any())
+    {
+        <p>Your cart is empty.</p>
+        <a asp-controller="Product" asp-action="Index" class="btn btn-primary">Continue Shopping</a>
+    }
+    else
+    {
+        <table class="table align-middle" id="cartTable">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Price</th>
+                    <th style="width: 160px;">Quantity</th>
+                    <th>Total</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr data-id="@item.Id">
+                        <td>@item.Product.Name</td>
+                        <td class="price" data-price="@item.Product.Price">$@item.Product.Price</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-1">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="decreaseQty(this)">-</button>
+                                <input type="number" name="quantity" value="@item.Quantity" min="1" class="form-control text-center" style="width: 60px;" />
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="increaseQty(this)">+</button>
+                            </div>
+                        </td>
+                        <td class="item-total">$@(item.Product.Price * item.Quantity)</td>
+                        <td>
+                            <form asp-action="Remove" method="post">
+                                <input type="hidden" name="cartItemId" value="@item.Id" />
+                                <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="text-end">
+            <h4>
+                Total: $<span id="cartTotal">
+                    @($"{Model.Sum(i => i.Product.Price * i.Quantity):0.00}")
+                </span>
+            </h4>
+        </div>
+
+        <a asp-controller="Product" asp-action="Index" class="btn btn-secondary">Continue Shopping</a>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function increaseQty(button) {
+            const input = button.parentElement.querySelector('input[name="quantity"]');
+            input.value = parseInt(input.value) + 1;
+            updateQuantity(button);
+        }
+
+        function decreaseQty(button) {
+            const input = button.parentElement.querySelector('input[name="quantity"]');
+            if (parseInt(input.value) > 1) {
+                input.value = parseInt(input.value) - 1;
+                updateQuantity(button);
+            }
+        }
+
+        async function updateQuantity(button) {
+            const row = button.closest('tr');
+            const cartItemId = row.dataset.id;
+            const quantity = row.querySelector('input[name="quantity"]').value;
+
+            const response = await fetch('/Cart/UpdateQuantity', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `cartItemId=${cartItemId}&quantity=${quantity}`
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    row.querySelector('.item-total').textContent = `$${result.itemTotal}`;
+                    document.getElementById('cartTotal').textContent = result.cartTotal;
+                }
+            }
+        }
+    </script>
+}

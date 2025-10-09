@@ -8,8 +8,7 @@
     <h2>@ViewData["Title"]</h2>
 
     <form method="get" class="d-flex mb-3">
-        <input type="search" name="search" class="form-control me-2"
-               placeholder="Search products..." value="@Context.Request.Query["search"]" />
+        <input type="search" name="search" class="form-control me-2" placeholder="Search products..." value="@Context.Request.Query["search"]" />
         <button type="submit" class="btn btn-primary">Search</button>
     </form>
 
@@ -17,15 +16,25 @@
         @foreach (var product in Model)
         {
             <div class="col">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm" style="cursor:pointer;" onclick="location.href='@Url.Action("Details", "Product", new { id = product.Id })'">
                     <img src="@Url.Content($"~/images/products/{product.ImageUrl}")" class="card-img-top" alt="@product.Name" />
-                    <div class="card-body">
+                    <div class="card-body d-flex flex-column">
                         <h5 class="card-title">@product.Name</h5>
-                        <p class="card-text">@product.Description</p>
+                        <p class="card-text flex-grow-1">@product.Description</p>
                         <p class="text-success fw-bold">$@product.Price</p>
-                        <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id" class="btn btn-sm btn-outline-primary">
-                            View Details
-                        </a>
+                        <div class="d-flex gap-2 mt-auto">
+                            <form asp-controller="Cart" asp-action="AddToCart" method="post"
+                                  class="flex-grow-3 w-75" onsubmit="event.stopPropagation();">
+                                <input type="hidden" name="productId" value="@product.Id" />
+                                <button type="submit" class="btn btn-success w-100 py-2">Add to Cart</button>
+                            </form>
+                            <a href="@Url.Action("Details", "Product", new { id = product.Id })"
+                               class="btn btn-outline-primary w-25 d-flex align-items-center justify-content-center"
+                               onclick="event.stopPropagation();">
+                                Details
+                            </a>
+                        </div>
+
                     </div>
                 </div>
             </div>
