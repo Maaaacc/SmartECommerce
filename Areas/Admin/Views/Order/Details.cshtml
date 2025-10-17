@@ -1,0 +1,31 @@
+﻿@model SmartECommerce.Models.Order
+
+<h2>Order Details</h2>
+
+<p><strong>Order Date:</strong> @Model.OrderDate.ToLocalTime().ToString("f")</p>
+<p><strong>Status:</strong> @Model.Status</p>
+<p><strong>Total Amount:</strong> $@Model.TotalAmount</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Subtotal</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.OrderItems)
+        {
+            <tr>
+                <td>@item.Product.Name</td>
+                <td>$@item.Price</td>
+                <td>@item.Quantity</td>
+                <td>$@(item.Price * item.Quantity)</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a asp-action="Index" class="btn btn-secondary">Back to Orders</a>

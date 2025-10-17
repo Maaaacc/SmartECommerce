@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace SmartECommerce.Models
 {
@@ -17,7 +18,7 @@ namespace SmartECommerce.Models
         [Range(1, int.MaxValue)]
         public int Quantity { get; set; }
 
-        [DataType(DataType.Currency)]
+        [Precision(18, 2)]
         public decimal Price { get; set; }
     }
 }

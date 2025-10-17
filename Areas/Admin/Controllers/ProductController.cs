@@ -58,7 +58,7 @@ namespace SmartECommerce.Areas.Admin.Controllers
                 }
 
                 await _productService.AddProductAsync(product);
-                TempData["SuccessMessage"] = "✅ Product created successfully";
+                TempData["SuccessMessage"] = "Product created successfully";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -105,7 +105,7 @@ namespace SmartECommerce.Areas.Admin.Controllers
                 }
 
                 await _productService.UpdateProductAsync(product);
-                TempData["SuccessMessage"] = "✅ Product updated successfully";
+                TempData["SuccessMessage"] = "Product updated successfully";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -126,7 +126,7 @@ namespace SmartECommerce.Areas.Admin.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             await _productService.DeleteProductAsync(id);
-            TempData["SuccessMessage"] = "✅ Product deleted successfully";
+            TempData["SuccessMessage"] = "Product deleted successfully";
             return RedirectToAction(nameof(Index));
         }
     }

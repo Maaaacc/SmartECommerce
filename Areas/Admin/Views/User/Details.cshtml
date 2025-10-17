@@ -1,0 +1,48 @@
+﻿@model SmartECommerce.Models.UserDetailsViewModel
+
+@{
+    ViewData["Title"] = "User Details";
+}
+
+<h2>@ViewData["Title"] - @Model.User.UserName</h2>
+
+<div class="mb-4">
+    <h4>User Information</h4>
+    <p><strong>Email:</strong> @Model.User.Email</p>
+    <p><strong>Phone Number:</strong> @Model.User.PhoneNumber ?? "N/A"</p>
+</div>
+
+<div class="mb-4">
+    <h4>Roles</h4>
+
+    <form asp-action="UpdateRoles" method="post">
+        <input type="hidden" name="userId" value="@Model.User.Id" />
+        <div class="form-group">
+            @foreach (var role in Model.AllRoles)
+            {
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="selectedRoles" value="@role"
+                    @(Model.UserRoles.Contains(role) ? "checked" : "") id="@role" />
+                    <label class="form-check-label" for="@role">@role</label>
+                </div>
+            }
+        </div>
+        <button type="submit" class="btn btn-primary mt-2">Update Roles</button>
+    </form>
+</div>
+
+<div class="mb-4">
+    <h4>Account Status</h4>
+    @{
+        var isLocked = Model.User.LockoutEnd.HasValue && Model.User.LockoutEnd.Value > DateTimeOffset.UtcNow;
+    }
+    <form asp-action="ToggleLockout" method="post" class="d-inline">
+        <input type="hidden" name="userId" value="@Model.User.Id" />
+        <input type="hidden" name="lockUser" value="@(isLocked ? "false" : "true")" />
+        <button type="submit" class="btn @(isLocked ? "btn-danger" : "btn-success")">
+            @(isLocked ? "Unlock User" : "Lock User")
+        </button>
+    </form>
+</div>
+
+<a asp-action="Index" class="btn btn-secondary">Back to List</a>

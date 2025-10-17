@@ -1,0 +1,17 @@
+﻿@model SmartECommerce.Models.Order
+
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+<h2>Update Order Status</h2>
+
+<form asp-action="UpdateStatus" method="post">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-3">
+        <label asp-for="Status" class="form-label">Order Status</label>
+        <select asp-for="Status" asp-items="ViewBag.StatusList" class="form-select"></select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Update Status</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>

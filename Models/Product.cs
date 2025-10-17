@@ -16,11 +16,11 @@ namespace SmartECommerce.Models
         [Column(TypeName = "decimal(10,2)")]
         [Required(ErrorMessage = "Price is required.")]
         [Range(0.01, 999999.99, ErrorMessage = "Price must be greater than 0.")]
-        public decimal? Price { get; set; }
+        public decimal Price { get; set; }
 
         [Required(ErrorMessage = "Stock is required.")]
         [Range(0, int.MaxValue, ErrorMessage = "Stock cannot be negative.")]
-        public int? Stock { get; set; }
+        public int Stock { get; set; }
 
         public string? ImageUrl { get; set; }
 

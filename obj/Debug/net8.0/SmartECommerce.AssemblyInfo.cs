@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SmartECommerce")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+06b89242529c3af722868c038b17640aeebdb5a4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a41de2385d9122adb025712de51779503d09eefa")]
 [assembly: System.Reflection.AssemblyProductAttribute("SmartECommerce")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SmartECommerce")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
