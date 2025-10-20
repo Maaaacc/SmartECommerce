@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SmartECommerce.Services;
+using SmartECommerce.Interface;
 using System.Drawing.Printing;
 using System.Security.Claims;
 

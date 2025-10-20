@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using SmartECommerce.Services;
+using SmartECommerce.Interface;
 using System.Threading.Tasks;
 
 namespace SmartECommerce.Controllers

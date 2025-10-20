@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SmartECommerce.Interface;
 using SmartECommerce.Models;
-using SmartECommerce.Services;
 using System.Threading.Tasks;
 
 namespace SmartECommerce.Areas.Admin.Controllers

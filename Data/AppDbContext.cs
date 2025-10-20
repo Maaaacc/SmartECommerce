@@ -15,6 +15,8 @@ namespace SmartECommerce.Data
         public DbSet<CartItem> CartItems { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
+        public DbSet<ShippingInfo> ShippingInfos { get; set; }
+
 
         // Override OnModelCreating for seed data if needed
         protected override void OnModelCreating(ModelBuilder builder)

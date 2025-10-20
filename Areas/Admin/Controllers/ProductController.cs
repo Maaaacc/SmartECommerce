@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using SmartECommerce.Interface;
 using SmartECommerce.Models;
-using SmartECommerce.Services;
 using System;
 using System.IO;
 using System.Threading.Tasks;

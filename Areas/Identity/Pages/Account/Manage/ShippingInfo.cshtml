@@ -1,0 +1,70 @@
+﻿@page
+@model SmartECommerce.Areas.Identity.Pages.Account.Manage.ShippingInfoModel
+@{
+    ViewData["Title"] = "Shipping Information";
+    ViewData["ActivePage"] = ManageNavPages.ShippingInfo;
+}
+
+<h3>@ViewData["Title"]</h3>
+<partial name="_StatusMessage" for="StatusMessage" />
+
+<div class="row">
+    <div class="col-md-6">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
+            <div class="form-floating mb-3">
+                <input asp-for="Input.RecipientName" class="form-control" placeholder="Recipient Name" />
+                <label asp-for="Input.RecipientName"></label>
+                <span asp-validation-for="Input.RecipientName" class="text-danger"></span>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input asp-for="Input.AddressLine1" class="form-control" placeholder="Address Line 1" />
+                <label asp-for="Input.AddressLine1"></label>
+                <span asp-validation-for="Input.AddressLine1" class="text-danger"></span>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input asp-for="Input.AddressLine2" class="form-control" placeholder="Address Line 2" />
+                <label asp-for="Input.AddressLine2"></label>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input asp-for="Input.City" class="form-control" placeholder="City" />
+                <label asp-for="Input.City"></label>
+                <span asp-validation-for="Input.City" class="text-danger"></span>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input asp-for="Input.State" class="form-control" placeholder="State" />
+                <label asp-for="Input.State"></label>
+                <span asp-validation-for="Input.State" class="text-danger"></span>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input asp-for="Input.ZipCode" class="form-control" placeholder="Zip Code" />
+                <label asp-for="Input.ZipCode"></label>
+                <span asp-validation-for="Input.ZipCode" class="text-danger"></span>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input asp-for="Input.Country" class="form-control" placeholder="Country" />
+                <label asp-for="Input.Country"></label>
+                <span asp-validation-for="Input.Country" class="text-danger"></span>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input asp-for="Input.PhoneNumber" class="form-control" placeholder="Phone Number" />
+                <label asp-for="Input.PhoneNumber"></label>
+                <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Save Shipping Info</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

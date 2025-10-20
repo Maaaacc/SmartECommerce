@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using SmartECommerce.Models;
 
-namespace SmartECommerce.Services
+namespace SmartECommerce.Interface
 {
     public interface ICategoryService
     {

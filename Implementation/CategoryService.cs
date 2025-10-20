@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SmartECommerce.Data;
+using SmartECommerce.Interface;
 using SmartECommerce.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;

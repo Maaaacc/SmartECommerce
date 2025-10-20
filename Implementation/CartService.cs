@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Connections.Features;
 using Microsoft.EntityFrameworkCore;
 using SmartECommerce.Data;
+using SmartECommerce.Interface;
 using SmartECommerce.Models;
 
 namespace SmartECommerce.Services

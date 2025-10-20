@@ -1,0 +1,226 @@
+﻿@model SmartECommerce.Models.ViewModels.AdminDashboardViewModel
+
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<h1 class="mb-4">Dashboard</h1>
+<p>Welcome back! Here's what's happening with your store today.</p>
+
+<div class="row g-4 mb-4">
+
+    <!-- Total Revenue -->
+    <div class="col-md-3">
+        <div class="card border-success shadow-sm">
+            <div class="card-body">
+                <h6>Total Revenue</h6>
+                <h2 class="text-success">$@Model.TotalRevenue.ToString("N0")</h2>
+                <small class="text-success">+@Model.RevenueChangePercentage.ToString("0.0")% vs last month</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Orders -->
+    <div class="col-md-3">
+        <div class="card border-primary shadow-sm">
+            <div class="card-body">
+                <h6>Total Orders</h6>
+                <h2 class="text-primary">@Model.TotalOrders</h2>
+                <small class="text-primary">+@Model.OrdersChangePercentage.ToString("0.0")% vs last month</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Customers -->
+    <div class="col-md-3">
+        <div class="card border-warning shadow-sm">
+            <div class="card-body">
+                <h6>Active Customers</h6>
+                <h2 class="text-warning">@Model.ActiveCustomers</h2>
+                <small class="text-warning">@Model.CustomersChangePercentage.ToString("0.0")% vs last month</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products in Stock -->
+    <div class="col-md-3">
+        <div class="card border-info shadow-sm">
+            <div class="card-body">
+                <h6>Products in Stock</h6>
+                <h2>@Model.ProductsInStock</h2>
+                <small>@Model.LowStockCount low stock</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <!-- Sales Trend Chart -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                Sales Trend
+                <a href="@Url.Action("Index", "Order", new { area = "Admin" })" class="btn btn-sm btn-link float-end">
+                    View Details
+                </a>
+            </div>
+            <div class="card-body">
+                <canvas id="salesTrendChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenue by Category Chart -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header">Revenue by Category</div>
+            <div class="card-body">
+                <canvas id="revenueByCategoryChart" height="250"></canvas>
+                <ul class="list-unstyled mt-3">
+                    @foreach (var c in Model.RevenueByCategory)
+                    {
+                        <li><span class="badge bg-secondary me-2">&nbsp;</span>@c.CategoryName: @c.Percentage.ToString("0")%</li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+
+    <!-- Top Selling Products -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header">Top Selling Products</div>
+            <div class="card-body">
+                <ul class="list-group">
+                    @foreach (var p in Model.TopSellingProducts)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            @p.ProductName
+                            <span class="badge bg-primary rounded-pill">@p.QuantitySold</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Orders -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Recent Orders</span>
+                <a href="@Url.Action("Index", "Order", new { area = "Admin" })" class="btn btn-sm btn-link">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <table class="table mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Order #</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var order in Model.RecentOrders)
+                        {
+                            <tr>
+                                <td>@order.OrderId</td>
+                                <td>@order.CustomerName</td>
+                                <td>@order.Date</td>
+                                <td>$@order.Total.ToString("0.00")</td>
+                                <td>
+                                    <span class="badge @(order.Status.ToLower() switch {
+                                        "shipped" => "bg-success",
+                                        "processing" => "bg-warning",
+                                        "pending" => "bg-secondary",
+                                        "delivered" => "bg-primary",
+                                        _ => "bg-info"
+                                    })">@order.Status</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Low Stock Alerts -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Low Stock Alerts</span>
+        <a href="@Url.Action("Index", "Product", new { area = "Admin" })" class="btn btn-sm btn-link">Manage Inventory</a>
+    </div>
+    <div class="card-body">
+        @if (Model.LowStockAlerts != null && Model.LowStockAlerts.Any())
+        {
+            <ul class="list-group">
+                @foreach (var alert in Model.LowStockAlerts)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        @alert.ProductName
+                        <span>
+                            Only @alert.QuantityLeft left (threshold: @alert.ReorderThreshold)
+                            <a href="@Url.Action("Edit", "Product", new { id = alert.ProductName })" class="btn btn-sm btn-outline-primary ms-2">Restock</a>
+                        </span>
+                    </li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p>No low stock alerts.</p>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Sales Trend Chart
+        const salesCtx = document.getElementById('salesTrendChart').getContext('2d');
+        const salesTrendChart = new Chart(salesCtx, {
+            type: 'line',
+            data: {
+                labels: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.SalesTrend.Select(s => s.Month))),
+                datasets: [{
+                    label: 'Revenue',
+                    data: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.SalesTrend.Select(s => s.Revenue))),
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Revenue By Category Chart
+        const categoryCtx = document.getElementById('revenueByCategoryChart').getContext('2d');
+        const revenueByCategoryChart = new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.RevenueByCategory.Select(c => c.CategoryName))),
+                datasets: [{
+                    data: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.RevenueByCategory.Select(c => c.Percentage))),
+                    backgroundColor: [
+                        '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e'
+                    ],
+                    hoverOffset: 20
+                }]
+            }
+        });
+    </script>
+}

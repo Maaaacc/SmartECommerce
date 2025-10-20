@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SmartECommerce.Data;
+using SmartECommerce.Interface;
 using SmartECommerce.Models;
+using SmartECommerce.Models.ViewModels;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -28,18 +30,15 @@ namespace SmartECommerce.Services
 
             return await query.ToListAsync();
         }
-
         public async Task<Product> GetProductByIdAsync(int id)
         {
             return await _context.Products.Include(p => p.Category).FirstOrDefaultAsync(p => p.Id == id);
         }
-
         public async Task AddProductAsync(Product product)
         {
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
         }
-
         public async Task UpdateProductAsync(Product product)
         {
             var existingProduct = await _context.Products.FirstOrDefaultAsync(p => p.Id == product.Id);
@@ -57,8 +56,6 @@ namespace SmartECommerce.Services
                 await _context.SaveChangesAsync();
             }
         }
-
-
         public async Task DeleteProductAsync(int id)
         {
             var product = await _context.Products.FindAsync(id);
@@ -67,6 +64,47 @@ namespace SmartECommerce.Services
                 _context.Products.Remove(product);
                 await _context.SaveChangesAsync();
             }
+        }
+
+        //Admin
+
+        public async Task<int> GetProductsInStockCountAsync()
+        {
+            return await _context.Products.CountAsync(p => p.Stock > 0);
+        }
+
+        public async Task<int> GetLowStockCountAsync()
+        {
+            return await _context.Products.CountAsync(p => p.Stock <= 10);
+        }
+
+        public async Task<IEnumerable<ProductSales>> GetTopSellingProductsAsync(int count)
+        {
+            var query = _context.OrderItems
+                .Include(oi => oi.Product)
+                .GroupBy(oi => oi.Product.Name)
+                .Select(g => new ProductSales
+                {
+                    ProductName = g.Key,
+                    QuantitySold = g.Sum(x => x.Quantity)
+                })
+                .OrderByDescending(ps => ps.QuantitySold)
+                .Take(count);
+
+            return await query.ToListAsync();
+        }
+
+        public async Task<IEnumerable<LowStockAlert>> GetLowStockAlertsAsync()
+        {
+            return await _context.Products
+                .Where(p => p.Stock <= 10)
+                .Select(p => new LowStockAlert
+                {
+                    ProductName = p.Name,
+                    QuantityLeft = p.Stock,
+                    ReorderThreshold = 10
+                })
+                .ToListAsync();
         }
     }
 }

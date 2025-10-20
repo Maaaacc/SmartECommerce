@@ -31,6 +31,9 @@ namespace  SmartECommerce.Areas.Identity.Pages.Account.Manage
         /// </summary>
         public static string ChangePassword => "ChangePassword";
 
+        public static string ShippingInfo => "ShippingInfo";
+
+
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
@@ -78,6 +81,9 @@ namespace  SmartECommerce.Areas.Identity.Pages.Account.Manage
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
         public static string ChangePasswordNavClass(ViewContext viewContext) => PageNavClass(viewContext, ChangePassword);
+
+        public static string ShippingInfoNavClass(ViewContext viewContext) => PageNavClass(viewContext, ShippingInfo);
+
 
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used

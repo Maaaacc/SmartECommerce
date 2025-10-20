@@ -1,0 +1,68 @@
+﻿@model SmartECommerce.Models.ViewModels.CheckoutViewModel
+
+@{
+    ViewData["Title"] = "Confirm Your Order";
+}
+
+<div class="container mt-4">
+    <h2>Review Your Order</h2>
+
+    <hr />
+
+    <!-- Shipping Info -->
+    <h4>Shipping Information</h4>
+
+    @if (Model.ShippingInfo != null)
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                <p><strong>@Model.ShippingInfo.RecipientName</strong></p>
+                <p>@Model.ShippingInfo.AddressLine1, @Model.ShippingInfo.City, @Model.ShippingInfo.State</p>
+                <p>@Model.ShippingInfo.Country, @Model.ShippingInfo.ZipCode</p>
+                <p>@Model.ShippingInfo.PhoneNumber</p>
+            </div>
+        </div>
+
+        <a asp-controller="Account" asp-action="ShippingInfo" class="btn btn-outline-secondary mb-3">Change Shipping Info</a>
+    }
+    else
+    {
+        <p>No shipping info found.</p>
+        <a asp-controller="Account" asp-action="ShippingInfo" class="btn btn-primary">Add Shipping Info</a>
+    }
+
+    <hr />
+
+    <!-- Cart Summary -->
+    <h4>Your Items</h4>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.CartItems)
+            {
+                <tr>
+                    <td>@item.Product.Name</td>
+                    <td>$@item.Product.Price</td>
+                    <td>@item.Quantity</td>
+                    <td>$@(item.Product.Price * item.Quantity)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="text-end">
+        <h4>Total: $@Model.TotalAmount</h4>
+    </div>
+
+    <form asp-controller="Order" asp-action="PlaceOrder" method="post">
+        <button type="submit" class="btn btn-success btn-lg mt-3">Place Order</button>
+    </form>
+
+</div>

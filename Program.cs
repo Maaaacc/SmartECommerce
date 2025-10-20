@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SmartECommerce.Data;
+using SmartECommerce.Interface;
 using SmartECommerce.Models;
 using SmartECommerce.Services;
 
@@ -51,6 +52,8 @@ builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IShippingInfoService, ShippingInfoService>();
+
 
 
 var app = builder.Build();
@@ -70,8 +73,9 @@ app.UseAuthorization();
 
 
 app.MapControllerRoute(
-    name: "admin",
-    pattern: "{area:exists}/{controller=Admin}/{action=Index}/{id?}");
+    name: "areas",
+    pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
+
 
 app.MapControllerRoute(
     name: "default",

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SmartECommerce.Models;
 using System.Diagnostics;
@@ -7,14 +8,27 @@ namespace SmartECommerce.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public HomeController(ILogger<HomeController> logger)
+
+        public HomeController(UserManager<ApplicationUser> userManager ,ILogger<HomeController> logger)
         {
+            _userManager = userManager;
             _logger = logger;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
+            if (User.Identity.IsAuthenticated)
+            {
+                var user = await _userManager.GetUserAsync(User);
+
+                if (await _userManager.IsInRoleAsync(user, "Admin"))
+                {
+                    return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
+                }
+            }
+
             return View();
         }
 

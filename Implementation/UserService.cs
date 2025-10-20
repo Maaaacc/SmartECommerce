@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using SmartECommerce.Data;
+using SmartECommerce.Interface;
 using SmartECommerce.Models;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,11 +13,14 @@ namespace SmartECommerce.Services
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly AppDbContext _context;
 
-        public UserService(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+
+        public UserService(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, AppDbContext context)
         {
             _userManager = userManager;
             _roleManager = roleManager;
+            _context = context;
         }
 
         public async Task<IEnumerable<ApplicationUser>> GetAllUsersAsync(string search = null)
@@ -67,6 +72,17 @@ namespace SmartECommerce.Services
             {
                 await _userManager.SetLockoutEndDateAsync(user, null);
             }
+        }
+
+        //Admin
+        public async Task<int> GetActiveCustomersCountAsync()
+        {
+            var threeMonthsAgo = DateTime.UtcNow.AddMonths(-3);
+            return await _context.Orders
+                .Where(o => o.OrderDate >= threeMonthsAgo)
+                .Select(o => o.UserId)
+                .Distinct()
+                .CountAsync();
         }
     }
 }

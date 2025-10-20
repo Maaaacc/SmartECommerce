@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace SmartECommerce.Services
+namespace SmartECommerce.Interface
 {
     public interface INotificationService
     {

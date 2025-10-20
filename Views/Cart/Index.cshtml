@@ -59,9 +59,11 @@
 
         <a asp-controller="Product" asp-action="Index" class="btn btn-secondary">Continue Shopping</a>
 
-        <form asp-controller="Order" asp-action="Checkout" method="post">
-            <button type="submit" class="btn btn-success">Checkout</button>
-        </form>
+        <a asp-controller="Order" asp-action="Checkout" class="btn btn-primary">
+            Proceed to Checkout
+        </a>
+
+
 
     }
 </div>
