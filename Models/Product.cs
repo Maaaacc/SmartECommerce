@@ -28,5 +28,18 @@ namespace SmartECommerce.Models
         public int? CategoryId { get; set; }
 
         public Category? Category { get; set; }
+
+
+        // ✅ Timestamp fields
+        [DataType(DataType.DateTime)]
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+        [DataType(DataType.DateTime)]
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+
+        [DataType(DataType.DateTime)]
+        public DateTime? DeletedAt { get; set; }
+        public bool IsActive { get; set; } = true;
+
     }
 }

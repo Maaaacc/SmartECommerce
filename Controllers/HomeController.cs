@@ -1,46 +1,37 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using SmartECommerce.Models;
-using System.Diagnostics;
+using SmartECommerce.Interface;
+using SmartECommerce.Models.ViewModels;
+using System.Threading.Tasks;
 
 namespace SmartECommerce.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IProductService _productService;
+        private readonly ICategoryService _categoryService;
 
-
-        public HomeController(UserManager<ApplicationUser> userManager ,ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, IProductService productService, ICategoryService categoryService)
         {
-            _userManager = userManager;
             _logger = logger;
+            _productService = productService;
+            _categoryService = categoryService;
         }
 
         public async Task<IActionResult> Index()
         {
-            if (User.Identity.IsAuthenticated)
+            var categories = await _categoryService.GetAllCategoriesAsync();
+            var featuredProducts = (await _productService.GetAllProductsAsync())
+                .Take(8)
+                .ToList();
+
+            var viewModel = new HomeViewModel
             {
-                var user = await _userManager.GetUserAsync(User);
+                Categories = categories,
+                FeaturedProducts = featuredProducts
+            };
 
-                if (await _userManager.IsInRoleAsync(user, "Admin"))
-                {
-                    return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
-                }
-            }
-
-            return View();
-        }
-
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            return View(viewModel);
         }
     }
 }

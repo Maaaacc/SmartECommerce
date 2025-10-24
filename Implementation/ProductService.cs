@@ -36,6 +36,9 @@ namespace SmartECommerce.Services
         }
         public async Task AddProductAsync(Product product)
         {
+            product.CreatedAt = DateTime.Now;
+            product.UpdatedAt = DateTime.Now;
+
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
         }
@@ -52,15 +55,21 @@ namespace SmartECommerce.Services
                 existingProduct.Stock = product.Stock;
                 existingProduct.CategoryId = product.CategoryId;
                 existingProduct.ImageUrl = product.ImageUrl;
+                existingProduct.UpdatedAt = DateTime.Now;
+
 
                 await _context.SaveChangesAsync();
             }
         }
         public async Task DeleteProductAsync(int id)
         {
+
             var product = await _context.Products.FindAsync(id);
             if (product != null)
             {
+
+                product.DeletedAt = DateTime.Now;
+
                 _context.Products.Remove(product);
                 await _context.SaveChangesAsync();
             }
