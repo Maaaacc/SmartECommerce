@@ -5,6 +5,7 @@ using SmartECommerce.Models;
 using SmartECommerce.Models.ViewModels;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Quic;
 using System.Threading.Tasks;
 
 namespace SmartECommerce.Services
@@ -18,18 +19,38 @@ namespace SmartECommerce.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<Product>> GetAllProductsAsync(string search = null, int? categoryId = null)
+        public async Task<IEnumerable<Product>> GetAllProductsAsync(
+            string search = null, 
+            List<int>? categoryIds = null,
+            decimal? minPrice = null,
+            decimal? maxPrice = null,
+            string sortOrder = null)
         {
             var query = _context.Products.Include(p => p.Category).AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
                 query = query.Where(p => p.Name.Contains(search));
 
-            if (categoryId.HasValue)
-                query = query.Where(p => p.CategoryId == categoryId);
+            if (categoryIds?.Any() == true)
+                query = query.Where(p => p.CategoryId.HasValue && categoryIds.Contains(p.CategoryId.Value));
+
+
+            if (minPrice.HasValue)
+                query = query.Where(p => p.Price >= minPrice.Value);
+
+            if (maxPrice.HasValue)
+                query = query.Where(p => p.Price <= maxPrice.Value);
+
+            query = sortOrder switch
+            {
+                "price_asc" => query.OrderBy(p => p.Price),
+                "price_desc" => query.OrderByDescending(p => p.Price),
+                _ => query.OrderBy(p => p.Name),
+            };
 
             return await query.ToListAsync();
         }
+
         public async Task<Product> GetProductByIdAsync(int id)
         {
             return await _context.Products.Include(p => p.Category).FirstOrDefaultAsync(p => p.Id == id);

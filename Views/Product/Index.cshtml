@@ -2,42 +2,285 @@
 
 @{
     ViewData["Title"] = "Products";
+    var selectedCategories = ViewBag.SelectedCategories as List<int> ?? new List<int>();
+    var minPrice = ViewBag.MinPrice as decimal?;
+    var maxPrice = ViewBag.MaxPrice as decimal?;
+    var sortOrder = ViewBag.SortOrder as string ?? "";
+    var viewMode = ViewBag.ViewMode as string ?? "grid";
+    var minPriceRange = (decimal)(ViewBag.MinPriceRange ?? 0);
+    var maxPriceRange = (decimal)(ViewBag.MaxPriceRange ?? 1000);
 }
 
 <div class="container mt-4">
-    <h2>@ViewData["Title"]</h2>
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-">
+        <!-- Toggle Filters button for small screens -->
+        <button class="btn btn-outline-primary d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasFilters" aria-controls="offcanvasFilters">
+            Filters <i class="bi bi-funnel-fill"></i>
+        </button>
 
-    <form method="get" class="d-flex mb-3">
-        <input type="search" name="search" class="form-control me-2" placeholder="Search products..." value="@Context.Request.Query["search"]" />
-        <button type="submit" class="btn btn-primary">Search</button>
-    </form>
+        <!-- Sort and View mode controls -->
+        <div class="d-flex align-items-center gap-3 flex-grow-1 justify-content-end">
+            <form method="get" id="sortForm" class="d-flex align-items-center gap-2">
+                <input type="hidden" name="search" value="@Context.Request.Query["search"]" />
+                @foreach (var catId in selectedCategories)
+                {
+                    <input type="hidden" name="categories" value="@catId" />
+                }
+                <input type="hidden" name="minPrice" value="@(minPrice ?? minPriceRange)" />
+                <input type="hidden" name="maxPrice" value="@(maxPrice ?? maxPriceRange)" />
+                <input type="hidden" name="viewMode" value="@viewMode" />
 
-    <div class="row row-cols-1 row-cols-md-3 g-4">
-        @foreach (var product in Model)
-        {
-            <div class="col">
-                <div class="card h-100 shadow-sm" style="cursor:pointer;" onclick="location.href='@Url.Action("Details", "Product", new { id = product.Id })'">
-                    <img src="@Url.Content($"~/images/products/{product.ImageUrl}")" class="card-img-top" alt="@product.Name" />
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title">@product.Name</h5>
-                        <p class="card-text flex-grow-1">@product.Description</p>
-                        <p class="text-success fw-bold">$@product.Price</p>
-                        <div class="d-flex gap-2 mt-auto">
-                            <form asp-controller="Cart" asp-action="AddToCart" method="post"
-                                  class="flex-grow-3 w-75" onsubmit="event.stopPropagation();">
-                                <input type="hidden" name="productId" value="@product.Id" />
-                                <button type="submit" class="btn btn-success w-100 py-2">Add to Cart</button>
-                            </form>
-                            <a href="@Url.Action("Details", "Product", new { id = product.Id })"
-                               class="btn btn-outline-primary w-25 d-flex align-items-center justify-content-center"
-                               onclick="event.stopPropagation();">
-                                Details
-                            </a>
+                <label for="sortOrder" class="mb-0">Sort by:</label>
+                <select name="sortOrder" id="sortOrder" class="form-select form-select-sm" style="width: 180px;" onchange="this.form.submit()">
+                    <option value="" selected="@(string.IsNullOrEmpty(sortOrder) ? "selected" : "")">Name</option>
+                    <option value="price_asc" selected="@(sortOrder == "price_asc" ? "selected" : "")">Price: Low to High</option>
+                    <option value="price_desc" selected="@(sortOrder == "price_desc" ? "selected" : "")">Price: High to Low</option>
+                </select>
+            </form>
+
+            <div class="btn-group" role="group" aria-label="View mode toggle">
+                <button type="button" class="btn btn-outline-primary @(viewMode == "grid" ? "active" : "") d-none d-md-inline-block" onclick="changeViewMode('grid')" title="Grid View">
+                    <i class="bi bi-grid"></i>
+                </button>
+                <button type="button" class="btn btn-outline-primary @(viewMode == "list" ? "active" : "") d-none d-md-inline-block" onclick="changeViewMode('list')" title="List View">
+                    <i class="bi bi-list"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Filter Sidebar for md and up -->
+        <aside class="col-md-3 d-none d-md-block">
+            <h5 class="mb-3">Filters</h5>
+            <form method="get" id="filterFormDesktop">
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Categories</label>
+                    @foreach (var cat in (SelectList)ViewBag.Categories)
+                    {
+                        var catId = int.Parse(cat.Value);
+                        <div class="form-check">
+                            <input class="form-check-input filter-input" type="checkbox"
+                                   name="categories" value="@cat.Value"
+                                   id="cat_@cat.Value"
+                                   @(selectedCategories.Contains(catId) ? "checked" : "") />
+                            <label class="form-check-label" for="cat_@cat.Value">@cat.Text</label>
                         </div>
+                    }
+                </div>
 
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Price Range</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="number" min="@minPriceRange" max="@maxPriceRange" name="minPrice" id="minPriceDesktop"
+                               class="form-control filter-input" style="width: 90px;" value="@(minPrice ?? minPriceRange)" placeholder="Min" />
+                        <span>to</span>
+                        <input type="number" min="@minPriceRange" max="@maxPriceRange" name="maxPrice" id="maxPriceDesktop"
+                               class="form-control filter-input" style="width: 90px;" value="@(maxPrice ?? maxPriceRange)" placeholder="Max" />
                     </div>
                 </div>
+
+                <input type="hidden" name="search" value="@Context.Request.Query["search"]" />
+                <input type="hidden" name="sortOrder" value="@sortOrder" />
+                <input type="hidden" name="viewMode" value="@viewMode" />
+            </form>
+        </aside>
+
+        <!-- Offcanvas Filter for small screens -->
+        <div class="offcanvas offcanvas-start d-md-none" tabindex="-1" id="offcanvasFilters" aria-labelledby="offcanvasFiltersLabel">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title" id="offcanvasFiltersLabel">Filters</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
-        }
+            <div class="offcanvas-body">
+                <form method="get" id="filterFormMobile">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Categories</label>
+                        @foreach (var cat in (SelectList)ViewBag.Categories)
+                        {
+                            var catId = int.Parse(cat.Value);
+                            <div class="form-check">
+                                <input class="form-check-input filter-input" type="checkbox"
+                                       name="categories" value="@cat.Value"
+                                       id="cat_mobile_@cat.Value"
+                                       @(selectedCategories.Contains(catId) ? "checked" : "") />
+                                <label class="form-check-label" for="cat_mobile_@cat.Value">@cat.Text</label>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Price Range</label>
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="number" min="@minPriceRange" max="@maxPriceRange" name="minPrice" id="minPriceMobile"
+                                   class="form-control filter-input" style="width: 90px;" value="@(minPrice ?? minPriceRange)" placeholder="Min" />
+                            <span>to</span>
+                            <input type="number" min="@minPriceRange" max="@maxPriceRange" name="maxPrice" id="maxPriceMobile"
+                                   class="form-control filter-input" style="width: 90px;" value="@(maxPrice ?? maxPriceRange)" placeholder="Max" />
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="search" value="@Context.Request.Query["search"]" />
+                    <input type="hidden" name="sortOrder" value="@sortOrder" />
+                    <input type="hidden" name="viewMode" value="@viewMode" />
+                </form>
+            </div>
+        </div>
+
+        <!-- Products Display -->
+        <section class="col-12 col-md-9">
+            @if (viewMode == "grid")
+            {
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+                    @foreach (var product in Model)
+                    {
+                        <div class="col">
+                            <div class="card h-100 shadow-sm" onclick="location.href='@Url.Action("Details", "Product", new { id = product.Id })'">
+                                <div class="position-relative" style="height: 220px; overflow: hidden;">
+                                    <img src="@Url.Content($"~/images/products/{product.ImageUrl}")"
+                                         class="card-img-top"
+                                         alt="@product.Name"
+                                         style="object-fit: cover; height: 100%; width: 100%;" />
+                                    @if (product.Stock == 0)
+                                    {
+                                        <span class="badge bg-danger position-absolute top-0 end-0 m-2">Out of Stock</span>
+                                    }
+                                </div>
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title">@product.Name</h5>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="text-success fw-bold">$@product.Price</span>
+                                        <span class="text-muted">@product.Category?.Name</span>
+                                    </div>
+                                    <p class="text-muted small mb-3">
+                                        @(string.IsNullOrWhiteSpace(product.Description)
+                                            ? "No description available."
+                                            : (product.Description.Length > 60
+                                                ? product.Description.Substring(0, 60) + "..."
+                                                : product.Description))
+                                    </p>
+                                    <form asp-controller="Cart" asp-action="AddToCart" method="post" onsubmit="event.stopPropagation()" class="mt-auto">
+                                        <input type="hidden" name="productId" value="@product.Id" />
+                                        <button type="submit" class="btn btn-primary w-100 py-2">Add to Cart</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th class="d-none d-md-table-cell">Description</th>
+                                <th>Price</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var product in Model)
+                            {
+                                <tr onclick="location.href='@Url.Action("Details", "Product", new { id = product.Id })'" style="cursor: pointer;">
+                                    <td>
+                                        <img src="@Url.Content($"~/images/products/{product.ImageUrl}")" alt="@product.Name" style="width: 50px; height: auto;" class="img-fluid" />
+                                    </td>
+                                    <td>@product.Name</td>
+                                    <td>@product.Category?.Name</td>
+                                    <td class="d-none d-md-table-cell text-muted small">
+                                        @(string.IsNullOrWhiteSpace(product.Description)
+                                            ? "No description available."
+                                            : (product.Description.Length > 60
+                                                ? product.Description.Substring(0, 60) + "..."
+                                                : product.Description))
+                                    </td>
+                                    <td class="text-success fw-bold">$@product.Price</td>
+                                    <td>
+                                        <form asp-controller="Cart" asp-action="AddToCart" method="post" onsubmit="event.stopPropagation()">
+                                            <input type="hidden" name="productId" value="@product.Id" />
+                                            <button type="submit" class="btn btn-primary btn-sm">Add to Cart</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
     </div>
 </div>
+
+<script>
+    // Automatically submit filters when inputs change
+    function submitFilterForm(formId) {
+        const form = document.getElementById(formId);
+        if (!form) return;
+
+        form.addEventListener('change', () => {
+            // Collect current inputs and submit with throttling
+            if (window.filterTimeout) clearTimeout(window.filterTimeout);
+            window.filterTimeout = setTimeout(() => {
+                // Synchronize hidden inputs in sortForm before submitting
+                const sortForm = document.getElementById('sortForm');
+                if (sortForm) {
+                    const filterFormData = new FormData(form);
+
+                    // Update hidden inputs in sortForm for categories
+                    const hiddenCategories = sortForm.querySelectorAll('input[name="categories"]');
+                    hiddenCategories.forEach(el => el.remove());
+
+                    filterFormData.getAll('categories').forEach(cat => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'categories';
+                        input.value = cat;
+                        sortForm.appendChild(input);
+                    });
+
+                    // Update minPrice and maxPrice hidden inputs
+                    const minPrice = filterFormData.get('minPrice') || '';
+                    const maxPrice = filterFormData.get('maxPrice') || '';
+
+                    sortForm.querySelector('input[name="minPrice"]').value = minPrice;
+                    sortForm.querySelector('input[name="maxPrice"]').value = maxPrice;
+
+                    sortForm.submit();
+                } else {
+                    form.submit();
+                }
+            }, 400);
+        });
+
+        // For price inputs also listen to keyup for instant typing effect
+        const priceInputs = form.querySelectorAll('input[type="number"]');
+        priceInputs.forEach(input => {
+            input.addEventListener('keyup', () => {
+                if (window.filterTimeout) clearTimeout(window.filterTimeout);
+                window.filterTimeout = setTimeout(() => form.dispatchEvent(new Event('change')), 500);
+            });
+        });
+    }
+
+    // Initialize filters auto-submit for both desktop and mobile forms
+    document.addEventListener('DOMContentLoaded', () => {
+        submitFilterForm('filterFormDesktop');
+        submitFilterForm('filterFormMobile');
+    });
+
+    // Change ViewMode function
+    function changeViewMode(mode) {
+        if (window.innerWidth < 768 && mode === "list") {
+            alert("List view is not available on mobile.");
+            return;
+        }
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('viewMode', mode);
+        window.location.search = urlParams.toString();
+    }
+</script>

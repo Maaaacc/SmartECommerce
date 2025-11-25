@@ -1,5 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using SmartECommerce.Data;
 using SmartECommerce.Interface;
+using SmartECommerce.Models.ViewModels;
 using System.Threading.Tasks;
 
 namespace SmartECommerce.Controllers
@@ -7,17 +11,43 @@ namespace SmartECommerce.Controllers
     public class ProductController : Controller
     {
         private readonly IProductService _productService;
-
-        public ProductController(IProductService productService)
+        private readonly AppDbContext _context;
+        public ProductController(IProductService productService, AppDbContext context)
         {
             _productService = productService;
+            _context = context;
         }
+
 
         // GET: /Product
         // Displays product list with optional search and filter by category
-        public async Task<IActionResult> Index(string search, int? category)
+        public async Task<IActionResult> Index(
+            string search, 
+            List<int>? categories,
+            decimal? minPrice,
+            decimal? maxPrice,
+            string sortOrder,
+            string viewMode = "grid")
         {
-            var products = await _productService.GetAllProductsAsync(search, category);
+            var products = await _productService.GetAllProductsAsync(search, categories, minPrice, maxPrice, sortOrder);
+
+            var allCategories = await _context.Categories.ToListAsync();
+
+            ViewBag.Categories = new SelectList(allCategories, "Id", "Name");
+            ViewBag.SelectedCategories = categories ?? new List<int>();
+            ViewBag.MinPrice = minPrice;
+            ViewBag.MaxPrice = maxPrice;
+            ViewBag.SortOrder = sortOrder;
+            ViewBag.ViewMode = viewMode;
+
+            var priceRange = await _context.Products
+                .GroupBy(p => 1)
+                .Select(g => new { MinPrice = g.Min(p => p.Price), MaxPrice = g.Max(p => p.Price) })
+                .FirstOrDefaultAsync();
+
+            ViewBag.MinPriceRange = priceRange?.MinPrice ?? 0;
+            ViewBag.MaxPriceRange = priceRange?.MaxPrice ?? 1000;
+
             return View(products);
         }
 
@@ -28,7 +58,19 @@ namespace SmartECommerce.Controllers
             if (product == null)
                 return NotFound();
 
-            return View(product);
+            var moreProducts = await _context.Products
+                .Where(p => p.CategoryId == product.CategoryId && p.Id != id)
+                .Take(8)
+                .ToListAsync();
+
+            var model = new ProductDetailsViewModel
+            {
+                Product = product,
+                MoreProducts = moreProducts
+            };
+
+            return View(model);
         }
+
     }
 }

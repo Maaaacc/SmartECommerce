@@ -7,7 +7,12 @@ namespace SmartECommerce.Interface
 {
     public interface IProductService
     {
-        Task<IEnumerable<Product>> GetAllProductsAsync(string search = null, int? categoryId = null);
+        Task<IEnumerable<Product>> GetAllProductsAsync(
+            string search = null,
+            List<int>? categoryIds = null,
+            decimal? minPrice = null,
+            decimal? maxPrice = null,
+            string sortOrder = null);
         Task<Product> GetProductByIdAsync(int id);
         Task AddProductAsync(Product product);
         Task UpdateProductAsync(Product product);

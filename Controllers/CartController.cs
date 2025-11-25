@@ -30,10 +30,13 @@ namespace SmartECommerce.Controllers
             return RedirectToAction("Index", "Product");
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string viewMode = "grid")
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var cartItems = await _cartService.GetCartItemsAsync(userId);
+
+            ViewBag.ViewMode = viewMode;
+
             return View(cartItems);
         }
 
