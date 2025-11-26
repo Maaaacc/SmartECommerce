@@ -21,12 +21,10 @@ namespace SmartECommerce.Services
 
         public async Task AddOrUpdateAsync(ShippingInfo shippingInfo)
         {
-            var existing = await _context.ShippingInfos.FirstOrDefaultAsync(s => s.UserId == shippingInfo.UserId);
-            if (existing == null)
-            {
-                _context.ShippingInfos.Add(shippingInfo);
-            }
-            else
+            var existing = await _context.ShippingInfos
+                .FirstOrDefaultAsync(s => s.UserId == shippingInfo.UserId);
+
+            if (existing != null)
             {
                 existing.RecipientName = shippingInfo.RecipientName;
                 existing.AddressLine1 = shippingInfo.AddressLine1;
@@ -36,7 +34,14 @@ namespace SmartECommerce.Services
                 existing.ZipCode = shippingInfo.ZipCode;
                 existing.Country = shippingInfo.Country;
                 existing.PhoneNumber = shippingInfo.PhoneNumber;
+
+                _context.ShippingInfos.Update(existing);
             }
+            else
+            {
+                _context.ShippingInfos.Add(shippingInfo);
+            }
+
             await _context.SaveChangesAsync();
         }
     }

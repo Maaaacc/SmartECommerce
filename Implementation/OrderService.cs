@@ -19,59 +19,22 @@ namespace SmartECommerce.Services
             _context = context;
         }
 
-        public async Task CreateOrderAsync(string userId)
+
+        public async Task<IEnumerable<Order>> GetOrdersByUserAsync(string userId, OrderStatus? status = null)
         {
-            var cartItems = await _context.CartItems
-                .Where(c => c.UserId == userId)
-                .Include(c => c.Product)
-                .ToListAsync();
-
-            if (!cartItems.Any())
-                throw new InvalidOperationException("Cart is empty.");
-
-            var order = new Order
-            {
-                UserId = userId,
-                OrderDate = DateTime.UtcNow,
-                Status = OrderStatus.Pending,
-                TotalAmount = cartItems.Sum(c => c.Product.Price * c.Quantity),
-                OrderItems = new List<OrderItem>()
-            };
-
-            foreach (var cartItem in cartItems)
-            {
-                if (cartItem.Product.Stock < cartItem.Quantity)
-                    throw new InvalidOperationException($"Not enough stock for product {cartItem.Product.Name}.");
-
-                var orderItem = new OrderItem
-                {
-                    ProductId = cartItem.ProductId,
-                    Quantity = cartItem.Quantity,
-                    Price = cartItem.Product.Price
-                };
-
-                order.OrderItems.Add(orderItem);
-
-                // Reduce stock
-                cartItem.Product.Stock -= cartItem.Quantity;
-            }
-
-            _context.Orders.Add(order);
-
-            // Clear user's cart
-            _context.CartItems.RemoveRange(cartItems);
-
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task<IEnumerable<Order>> GetOrdersByUserAsync(string userId)
-        {
-            return await _context.Orders
+            var query =  _context.Orders
                 .Where(o => o.UserId == userId)
                 .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.Product)
                 .OrderByDescending(o => o.OrderDate)
-                .ToListAsync();
+                .AsQueryable();
+
+            if (status.HasValue)
+            {
+                query = query.Where(o => o.Status == status);
+            }
+
+            return await query.ToListAsync();
         }
 
         public async Task<Order> GetOrderDetailsAsync(int orderId, string userId)
@@ -91,13 +54,6 @@ namespace SmartECommerce.Services
                 order.Status = status;
                 await _context.SaveChangesAsync();
             }
-        }
-        public async Task<IEnumerable<CartItem>> GetCartPreviewAsync(string userId)
-        {
-            return await _context.CartItems
-                .Where(c => c.UserId == userId)
-                .Include(c => c.Product)
-                .ToListAsync();
         }
 
 

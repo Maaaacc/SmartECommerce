@@ -1,35 +1,61 @@
 ﻿@model IEnumerable<SmartECommerce.Models.Order>
 
-<h2>Your Orders</h2>
+@{
+    OrderStatus selectedStatus = OrderStatus.Pending; // default
+    if (ViewBag.SelectedStatus != null)
+    {
+        Enum.TryParse(ViewBag.SelectedStatus.ToString(), out selectedStatus);
+    }
+    var statuses = Enum.GetValues(typeof(OrderStatus)).Cast<OrderStatus>();
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<ul class="nav nav-tabs mb-4" id="orderStatusTabs" role="tablist">
+    @foreach (var status in statuses)
+    {
+        var isActive = status == selectedStatus ? "active" : "";
+        <li class="nav-item" role="presentation">
+            <a class="nav-link @isActive"
+               href="@Url.Action("Index", new { status = status })"
+               role="tab" aria-selected="@(isActive == "active" ? "true" : "false")">
+                @status
+            </a>
+        </li>
+    }
+</ul>
+
 
 @if (!Model.Any())
 {
-    <p>You have no orders yet.</p>
+    <p>No orders with status '@selectedStatus'.</p>
     <a asp-controller="Product" asp-action="Index" class="btn btn-primary">Shop Now</a>
 }
 else
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Order Date</th>
-                <th>Total Amount</th>
-                <th>Status</th>
-                <th>Details</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var order in Model)
-            {
-                <tr>
-                    <td>@order.OrderDate.ToLocalTime().ToString("g")</td>
-                    <td>$@order.TotalAmount</td>
-                    <td>@order.Status</td>
-                    <td>
-                        <a asp-action="Details" asp-route-id="@order.Id" class="btn btn-info btn-sm">View</a>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        @foreach (var order in Model)
+        {
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    <img src="@(order.OrderItems?.FirstOrDefault()?.Product.ImageUrl != null
+                                 ? Url.Content($"~/images/products/{order.OrderItems.First().Product.ImageUrl}")
+                                 : Url.Content("~/images/placeholder.png"))"
+                         alt="Order #@order.Id"
+                         class="card-img-top"
+                         style="object-fit: cover; height: 200px;" />
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">Order #@order.Id</h5>
+                        <p class="card-text mb-1"><strong>Date:</strong> @order.OrderDate.ToLocalTime().ToString("g")</p>
+                        <p class="card-text mb-1"><strong>Total:</strong> $@order.TotalAmount.ToString("0.00")</p>
+                        <p class="card-text mb-3"><strong>Status:</strong> @order.Status</p>
+
+                        <a asp-action="Details" asp-route-id="@order.Id" class="btn btn-info mt-auto align-self-start">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
 }

@@ -37,9 +37,8 @@ namespace SmartECommerce.Models
         public string? PhoneNumber { get; set; }
 
         // Link to user
-        [Required]
-        public string UserId { get; set; }
-        public ApplicationUser User { get; set; }
+        public string? UserId { get; set; }
+        public ApplicationUser? User { get; set; }
     }
 
 }

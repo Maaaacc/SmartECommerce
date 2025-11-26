@@ -21,7 +21,7 @@ namespace SmartECommerce.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ShippingInfo(bool fromCheckout = false)
+        public async Task<IActionResult> ShippingInfo()
         {
             var userId = _userManager.GetUserId(User);
             if (userId == null)
@@ -30,30 +30,50 @@ namespace SmartECommerce.Controllers
             }
 
             var shipping = await _shippingInfoService.GetByUserIdAsync(userId);
-
             if (shipping == null)
             {
-                shipping = new ShippingInfo();
+                shipping = new ShippingInfo
+                {
+                    UserId = userId  // Set it here for new records
+                };
             }
 
-            ViewBag.FromCheckout = fromCheckout;
             return View(shipping);
         }
 
         [HttpPost]
-        public async Task<IActionResult> ShippingInfo(ShippingInfo model, bool fromCheckout = false)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ShippingInfo(ShippingInfo model)
         {
-            if (!ModelState.IsValid)
-                return View(model);
+            System.Diagnostics.Debug.WriteLine("=== POST ShippingInfo START ===");
 
-            model.UserId = _userManager.GetUserId(User);
+            var userId = _userManager.GetUserId(User);
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            System.Diagnostics.Debug.WriteLine($"UserId: {userId}");
+            System.Diagnostics.Debug.WriteLine($"Model.Id: {model.Id}");
+            System.Diagnostics.Debug.WriteLine($"ModelState.IsValid: {ModelState.IsValid}");
+
+            if (!ModelState.IsValid)
+            {
+                foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    System.Diagnostics.Debug.WriteLine($"Validation Error: {error.ErrorMessage}");
+                }
+                return View(model);
+            }
+
+            // Always set UserId from authenticated user
+            model.UserId = userId;
+
             await _shippingInfoService.AddOrUpdateAsync(model);
 
-            if (fromCheckout)
-                return RedirectToAction("Checkout", "Order");
-
             TempData["Success"] = "Shipping information saved successfully.";
-            return RedirectToAction("Profile", "Account");
+            return RedirectToAction("Index", "Checkout");
         }
+
     }
 }

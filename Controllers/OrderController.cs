@@ -23,69 +23,17 @@ namespace SmartECommerce.Controllers
             _shippingInfoService = shippingInfoService;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Checkout()
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null)
-                return Unauthorized();
-
-            // Get shipping info
-            var shippingInfo = await _shippingInfoService.GetByUserIdAsync(userId);
-
-            // Get cart items
-            var cartItems = await _orderService.GetCartPreviewAsync(userId);
-            // ✅ (we’ll define this method next if needed)
-
-            if (cartItems == null || !cartItems.Any())
-            {
-                TempData["ErrorMessage"] = "Your cart is empty.";
-                return RedirectToAction("Index", "Cart");
-            }
-
-            var viewModel = new CheckoutViewModel
-            {
-                ShippingInfo = shippingInfo,
-                CartItems = cartItems,
-                TotalAmount = cartItems.Sum(i => i.Product.Price * i.Quantity)
-            };
-
-            return View(viewModel);
-        }
-
-
-        // Place order from current user's cart
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> PlaceOrder()
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null)
-                return Unauthorized();
-
-            var shippingInfo = await _shippingInfoService.GetByUserIdAsync(userId);
-            if (shippingInfo == null)
-                return RedirectToAction("ShippingInfo", "Account", new { fromCheckout = true });
-
-            try
-            {
-                await _orderService.CreateOrderAsync(userId);
-                TempData["SuccessMessage"] = "Order placed successfully!";
-                return RedirectToAction("Index");
-            }
-            catch (InvalidOperationException ex)
-            {
-                TempData["ErrorMessage"] = ex.Message;
-                return RedirectToAction("Index", "Cart");
-            }
-        }
+       
 
 
         // Order history page
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(OrderStatus? status)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var orders = await _orderService.GetOrdersByUserAsync(userId);
+            var orders = await _orderService.GetOrdersByUserAsync(userId, status);
+
+            ViewBag.SelectedStatus = status?.ToString();
+
             return View(orders);
         }
 

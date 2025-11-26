@@ -7,11 +7,9 @@ namespace SmartECommerce.Interface
 {
     public interface IOrderService
     {
-        Task CreateOrderAsync(string userId);
-        Task<IEnumerable<Order>> GetOrdersByUserAsync(string userId);
+        Task<IEnumerable<Order>> GetOrdersByUserAsync(string userId, OrderStatus? status);
         Task<Order> GetOrderDetailsAsync(int orderId, string userId);
         Task UpdateOrderStatusAsync(int orderId, OrderStatus status);
-        Task<IEnumerable<CartItem>> GetCartPreviewAsync(string userId);
 
         //Admin
         Task<IEnumerable<Order>> GetAllOrdersAsync();
