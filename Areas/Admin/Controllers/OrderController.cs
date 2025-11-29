@@ -21,9 +21,10 @@ namespace SmartECommerce.Areas.Admin.Controllers
         // List all orders
         public async Task<IActionResult> Index()
         {
-            var orders = await _orderService.GetAllOrdersAsync(); // fetch all for admin
+            var orders = await _orderService.GetAllOrdersAsync(); 
             return View(orders);
         }
+
 
         // Details of an order
         public async Task<IActionResult> Details(int id)

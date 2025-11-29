@@ -167,7 +167,7 @@
                         @alert.ProductName
                         <span>
                             Only @alert.QuantityLeft left (threshold: @alert.ReorderThreshold)
-                            <a href="@Url.Action("Edit", "Product", new { id = alert.ProductName })" class="btn btn-sm btn-outline-primary ms-2">Restock</a>
+                            <a href="@Url.Action("Edit", "Product", new { id = alert.ProductId })" class="btn btn-sm btn-outline-primary ms-2">Restock</a>
                         </span>
                     </li>
                 }

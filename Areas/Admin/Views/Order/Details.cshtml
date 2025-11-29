@@ -2,10 +2,29 @@
 
 <h2>Order Details</h2>
 
+<p><strong>Customer Name:</strong> @Model.User</p
 <p><strong>Order Date:</strong> @Model.OrderDate.ToLocalTime().ToString("f")</p>
 <p><strong>Status:</strong> @Model.Status</p>
 <p><strong>Total Amount:</strong> $@Model.TotalAmount</p>
 
+<h3>Shipping Information</h3>
+@if (Model.User.ShippingInfo != null)
+{
+    <div class="card mb-3">
+        <div class="card-body">
+            <p><strong>@Model.User.ShippingInfo.RecipientName</strong></p>
+            <p>@Model.User.ShippingInfo.AddressLine1, @Model.User.ShippingInfo.City, @Model.User.ShippingInfo.State</p>
+            <p>@Model.User.ShippingInfo.Country, @Model.User.ShippingInfo.ZipCode</p>
+            <p>@Model.User.ShippingInfo.PhoneNumber</p>
+        </div>
+    </div>
+}
+else
+{
+    <p>No shipping information available.</p>
+}
+
+<h3>Products</h3>
 <table class="table">
     <thead>
         <tr>

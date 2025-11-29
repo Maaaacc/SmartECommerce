@@ -135,7 +135,7 @@
                     @foreach (var product in Model)
                     {
                         <div class="col">
-                            <div class="card h-100 shadow-sm" onclick="location.href='@Url.Action("Details", "Product", new { id = product.Id })'">
+                            <div class="card shadow-sm product-card" onclick="location.href='@Url.Action("Details", "Product", new { id = product.Id })'">
                                 <div class="position-relative" style="height: 220px; overflow: hidden;">
                                     <img src="@Url.Content($"~/images/products/{product.ImageUrl}")"
                                          class="card-img-top"
@@ -152,13 +152,6 @@
                                         <span class="text-success fw-bold">$@product.Price</span>
                                         <span class="text-muted">@product.Category?.Name</span>
                                     </div>
-                                    <p class="text-muted small mb-3">
-                                        @(string.IsNullOrWhiteSpace(product.Description)
-                                            ? "No description available."
-                                            : (product.Description.Length > 60
-                                                ? product.Description.Substring(0, 60) + "..."
-                                                : product.Description))
-                                    </p>
                                     <form asp-controller="Cart" asp-action="AddToCart" method="post" onsubmit="event.stopPropagation()" class="mt-auto">
                                         <input type="hidden" name="productId" value="@product.Id" />
                                         <button type="submit" class="btn btn-primary w-100 py-2">Add to Cart</button>

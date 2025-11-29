@@ -19,6 +19,14 @@ namespace SmartECommerce.Services
         public async Task<IEnumerable<Category>> GetAllCategoriesAsync()
         {
             return await _context.Categories.ToListAsync();
+
+        }
+        public async Task<IEnumerable<Category>> GetCategoriesWithProductsAsync()
+        {
+            return await _context.Categories
+                .Where(c => c.Products.Any())
+                .OrderBy(c => c.Name)
+                .ToListAsync();
         }
 
         public async Task<Category> GetCategoryByIdAsync(int id)

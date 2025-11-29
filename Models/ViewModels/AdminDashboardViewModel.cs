@@ -25,6 +25,8 @@ namespace SmartECommerce.Models.ViewModels
         public List<RecentOrder> RecentOrders { get; set; } = new();
 
         public List<LowStockAlert> LowStockAlerts { get; set; } = new();
+
+        public Product? product { get; set; }
     }
 
     public class SalesTrendPoint
@@ -56,6 +58,7 @@ namespace SmartECommerce.Models.ViewModels
 
     public class LowStockAlert
     {
+        public int ProductId {  get; set; }
         public string ProductName { get; set; }
         public int QuantityLeft { get; set; }
         public int ReorderThreshold { get; set; }

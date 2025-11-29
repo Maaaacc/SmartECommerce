@@ -112,6 +112,7 @@ namespace SmartECommerce.Services
         {
             var query = _context.OrderItems
                 .Include(oi => oi.Product)
+                .Where(oi => oi.Order.Status == OrderStatus.Completed)
                 .GroupBy(oi => oi.Product.Name)
                 .Select(g => new ProductSales
                 {
@@ -130,6 +131,7 @@ namespace SmartECommerce.Services
                 .Where(p => p.Stock <= 10)
                 .Select(p => new LowStockAlert
                 {
+                    ProductId = p.Id,
                     ProductName = p.Name,
                     QuantityLeft = p.Stock,
                     ReorderThreshold = 10

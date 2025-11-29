@@ -13,6 +13,7 @@ namespace SmartECommerce.Interface
             decimal? minPrice = null,
             decimal? maxPrice = null,
             string sortOrder = null);
+
         Task<Product> GetProductByIdAsync(int id);
         Task AddProductAsync(Product product);
         Task UpdateProductAsync(Product product);

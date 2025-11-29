@@ -58,16 +58,8 @@ namespace SmartECommerce.Services
 
 
         //Admin
+        public async Task<IEnumerable<Order>> GetAllOrdersAsync() { return await _context.Orders.Include(o => o.OrderItems).ThenInclude(oi => oi.Product).Include(o => o.User).OrderByDescending(o => o.OrderDate).ToListAsync(); }
 
-        public async Task<IEnumerable<Order>> GetAllOrdersAsync()
-        {
-            return await _context.Orders
-                .Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.Product)
-                .Include(o => o.User)
-                .OrderByDescending(o => o.OrderDate)
-                .ToListAsync();
-        }
 
         public async Task<Order> GetOrderDetailsAdminAsync(int orderId)
         {
@@ -75,20 +67,27 @@ namespace SmartECommerce.Services
                 .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.Product)
                 .Include(o => o.User)
+                    .ThenInclude(u => u.ShippingInfo)
                 .FirstOrDefaultAsync(o => o.Id == orderId);
         }
 
         public async Task<decimal> GetTotalRevenueAsync(DateTime from, DateTime to)
         {
             return await _context.Orders
-                .Where(o => o.OrderDate >= from && o.OrderDate <= to)
+                .Where(o => o.OrderDate >= from
+                    && o.OrderDate <= to
+                    && o.Status == OrderStatus.Completed)
                 .SumAsync(o => o.TotalAmount);
         }
 
         public async Task<int> GetTotalOrdersAsync(DateTime from, DateTime to)
         {
             return await _context.Orders
-                .CountAsync(o => o.OrderDate >= from && o.OrderDate <= to);
+                .CountAsync(o => o.OrderDate >= from
+                    && o.OrderDate <= to
+                    && (o.Status == OrderStatus.Pending 
+                        || o.Status == OrderStatus.Processing 
+                        || o.Status ==OrderStatus.Completed));
         }
 
         public async Task<IEnumerable<SalesTrendPoint>> GetMonthlySalesTrendAsync(int months)
@@ -97,7 +96,8 @@ namespace SmartECommerce.Services
             var startDate = new DateTime(now.Year, now.Month, 1).AddMonths(-months + 1);
 
             var query = _context.Orders
-                .Where(o => o.OrderDate >= startDate)
+                .Where(o => o.OrderDate >= startDate
+                         && o.Status == OrderStatus.Completed) 
                 .GroupBy(o => new { o.OrderDate.Year, o.OrderDate.Month })
                 .Select(g => new SalesTrendPoint
                 {
@@ -108,9 +108,13 @@ namespace SmartECommerce.Services
             var result = await query.ToListAsync();
 
             var fullRange = Enumerable.Range(0, months)
-                       .Select(i => startDate.AddMonths(i))
-                       .Select(d => new SalesTrendPoint { Month = $"{d.Month}/{d.Year}", Revenue = 0m })
-                       .ToList();
+                           .Select(i => startDate.AddMonths(i))
+                           .Select(d => new SalesTrendPoint
+                           {
+                               Month = $"{d.Month}/{d.Year}",
+                               Revenue = 0m
+                           })
+                           .ToList();
 
             foreach (var point in result)
             {
@@ -121,11 +125,13 @@ namespace SmartECommerce.Services
             return fullRange;
         }
 
+
         public async Task<IEnumerable<CategoryRevenue>> GetRevenueByCategoryAsync()
         {
             var query = _context.OrderItems
                 .Include(oi => oi.Product)
-                .ThenInclude(p => p.Category)
+                    .ThenInclude(p => p.Category)
+                .Where(oi => oi.Order.Status == OrderStatus.Completed) 
                 .GroupBy(oi => oi.Product.Category.Name)
                 .Select(g => new CategoryRevenue
                 {
@@ -143,6 +149,7 @@ namespace SmartECommerce.Services
 
             return results;
         }
+
 
         public async Task<IEnumerable<RecentOrder>> GetRecentOrdersAsync(int count)
         {

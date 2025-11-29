@@ -1,5 +1,6 @@
 html {
-  font-size: 14px;
+    font-size: 14px;
+    scrollbar-gutter: stable;
 }
 
 @media (min-width: 768px) {
@@ -19,6 +20,7 @@ html {
 
 body {
   margin-bottom: 60px;
+
 }
 
 .toast-container {
@@ -48,12 +50,16 @@ body {
 
 
 .product-card {
-    height: 400px; 
+    height: 350px !important; /* your fixed height */
     display: flex;
     flex-direction: column;
-    cursor: pointer;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
+
+    .product-card .card-body {
+        flex-grow: 1;
+        overflow: hidden;
+    }
+
 
     .product-card:hover {
         transform: translateY(-5px);

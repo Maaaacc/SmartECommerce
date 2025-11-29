@@ -20,7 +20,8 @@ namespace SmartECommerce.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var categories = await _categoryService.GetAllCategoriesAsync();
+            var categories = await _categoryService.GetCategoriesWithProductsAsync();
+
             var featuredProducts = (await _productService.GetAllProductsAsync())
                 .Take(8)
                 .ToList();

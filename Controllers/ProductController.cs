@@ -11,10 +11,12 @@ namespace SmartECommerce.Controllers
     public class ProductController : Controller
     {
         private readonly IProductService _productService;
+        private readonly ICategoryService _categoryService;
         private readonly AppDbContext _context;
-        public ProductController(IProductService productService, AppDbContext context)
+        public ProductController(IProductService productService, ICategoryService categoryService, AppDbContext context)
         {
             _productService = productService;
+            _categoryService = categoryService;
             _context = context;
         }
 
@@ -31,7 +33,7 @@ namespace SmartECommerce.Controllers
         {
             var products = await _productService.GetAllProductsAsync(search, categories, minPrice, maxPrice, sortOrder);
 
-            var allCategories = await _context.Categories.ToListAsync();
+            var allCategories = await _categoryService.GetCategoriesWithProductsAsync();
 
             ViewBag.Categories = new SelectList(allCategories, "Id", "Name");
             ViewBag.SelectedCategories = categories ?? new List<int>();
