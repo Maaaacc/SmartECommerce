@@ -3,51 +3,161 @@
 
 <h2>All Orders</h2>
 
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" asp-action="Index">
+            <div class="row g-3">
+
+                <!-- Search -->
+                <div class="col-md-3 form-floating">
+                    <input type="text" name="searchString" class="form-control"
+                           id="searchString"
+                           value="@ViewData["CurrentFilter"]"
+                           placeholder="Search customer or Order ID">
+                    <label for="searchString">Search customer or Order ID</label>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="col-md-2 form-floating">
+                    <select name="statusFilter" id="statusFilter" class="form-select">
+                        <option value="All" selected="@(ViewData["StatusFilter"]?.ToString() == "All")">All Status</option>
+                        @foreach (OrderStatus status in Enum.GetValues(typeof(OrderStatus)))
+                        {
+                            <option value="@status" selected="@(status.ToString() == ViewData["StatusFilter"]?.ToString())">
+                                @status
+                            </option>
+                        }
+                    </select>
+                    <label for="statusFilter">Status</label>
+                </div>
+
+                <!-- Payment Method Filter -->
+                <div class="col-md-2 form-floating">
+                    <select name="paymentMethod" id="paymentMethod" class="form-select">
+                        <option value="All" selected="@(ViewData["PaymentMethod"]?.ToString() == "All")">All Payments</option>
+                        @foreach (PaymentMethod pm in Enum.GetValues(typeof(PaymentMethod)))
+                        {
+                            <option value="@pm" selected="@(pm.ToString() == ViewData["PaymentMethod"]?.ToString())">
+                                @pm
+                            </option>
+                        }
+                    </select>
+                    <label for="paymentMethod">Payment Method</label>
+                </div>
+
+                <!-- From Date -->
+                <div class="col-md-2 form-floating">
+                    <input type="date" name="fromDate" class="form-control" 
+                           id="fromDate"
+                           value="@ViewData["FromDate"]" 
+                           placeholder="From Date">
+                    <label for="fromDate">From Date</label>
+                </div>
+
+                <!-- To Date -->
+                <div class="col-md-2 form-floating">
+                    <input type="date" name="toDate" class="form-control" 
+                           id="toDate"
+                           value="@ViewData["ToDate"]" 
+                           placeholder="To Date">
+                    <label for="toDate">To Date</label>
+                </div>
+
+                <!-- Filter Button -->
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">Filter</button>
+                </div>
+
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+<!-- Results -->
 @if (!Model.Any())
 {
-    <p>No orders found.</p>
+    <div class="alert alert-info">No orders found matching your criteria.</div>
 }
 else
 {
-    <table class="table table-striped table-hover">
-        <thead>
-            <tr>
-                <th>Order ID</th>
-                <th>Customer</th>
-                <th>Date</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var order in Model)
-            {
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
                 <tr>
-                    <td>@order.Id</td>
-                    <td>@(order.User != null ? $"{order.User.UserName}" : "N/A")</td>
-                    <td>@order.OrderDate.ToLocalTime().ToString("g")</td>
-                    <td>@order.TotalAmount.ToString("C")</td>
-                    <td>
-                        @switch (order.Status)
-                        {
-                            case OrderStatus.Pending:
-                                <span class="badge bg-secondary">Pending</span>
-                                break;
-                            case OrderStatus.Processing:
-                                <span class="badge bg-primary">Processing</span>
-                                break;
-                            case OrderStatus.Completed:
-                                <span class="badge bg-success">Completed</span>
-                                break;
-                        }
-                    </td>
-                    <td>
-                        <a asp-action="Details" asp-route-id="@order.Id" class="btn btn-info btn-sm">Details</a>
-                        <a asp-action="UpdateStatus" asp-route-id="@order.Id" class="btn btn-warning btn-sm">Update Status</a>
-                    </td>
+                    <th>Order ID</th>
+                    <th>
+                        Customer
+                        <a asp-action="Index" asp-route-sortOrder="@ViewData["CustomerSortParm"]"
+                           class="text-white small">↕</a>
+                    </th>
+                    <th>
+                        Date
+                        <a asp-action="Index" asp-route-sortOrder="@ViewData["DateSortParm"]"
+                           class="text-white small">↕</a>
+                    </th>
+                    <th>
+                        Total
+                        <a asp-action="Index" asp-route-sortOrder="@ViewData["TotalSortParm"]"
+                           class="text-white small">↕</a>
+                    </th>
+                    <th>Status</th>
+                    <th>Pending Time</th>
+                    <th>Actions</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var order in Model)
+                {
+                    <tr>
+                        <td><strong>#@order.Id</strong></td>
+                        <td>@(order.User?.UserName ?? "N/A")</td>
+                        <td>@order.OrderDate.ToLocalTime().ToString("MMM dd, yyyy hh:mm tt")</td>
+                        <td><strong>$@order.TotalAmount.ToString("0.00")</strong></td>
+                        <td>
+                            @switch (order.Status)
+                            {
+                                case OrderStatus.Pending:
+                                    <span class="badge bg-warning text-dark fs-6">Pending</span>
+                                    break;
+                                case OrderStatus.Processing:
+                                    <span class="badge bg-info fs-6">Processing</span>
+                                    break;
+                                case OrderStatus.Completed:
+                                    <span class="badge bg-success fs-6">Completed</span>
+                                    break;
+                                case OrderStatus.Cancelled:
+                                    <span class="badge bg-danger fs-6">Cancelled</span>
+                                    break;
+                            }
+                        </td>
+                        <td>
+                            @if (order.Status == OrderStatus.Pending)
+                            {
+                                var pendingDays = (DateTime.UtcNow - order.OrderDate).TotalDays;
+                                <span class="badge bg-danger">
+                                    @(pendingDays >= 7 ? "🚨 " : "")@pendingDays.ToString("F1") days
+
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">-</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a asp-action="Details" asp-route-id="@order.Id"
+                                   class="btn btn-sm btn-outline-primary">View</a>
+                                <a asp-action="UpdateStatus" asp-route-id="@order.Id"
+                                   class="btn btn-sm btn-outline-warning">Status</a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 }

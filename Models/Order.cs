@@ -9,7 +9,15 @@ namespace SmartECommerce.Models
     {
         Pending,
         Processing,
-        Completed
+        Completed,
+        Cancelled
+    }
+
+    public enum PaymentMethod
+    {
+        CreditCard,
+        GCash,
+        CashOnDelivery
     }
 
     public class Order
@@ -29,5 +37,6 @@ namespace SmartECommerce.Models
         public OrderStatus Status { get; set; }
 
         public ICollection<OrderItem> OrderItems { get; set; }
+        public PaymentMethod PaymentMethod { get; set; }
     }
 }

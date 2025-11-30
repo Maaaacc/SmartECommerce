@@ -22,7 +22,7 @@ namespace SmartECommerce.Services
 
         public async Task<IEnumerable<Order>> GetOrdersByUserAsync(string userId, OrderStatus? status = null)
         {
-            var query =  _context.Orders
+            var query = _context.Orders
                 .Where(o => o.UserId == userId)
                 .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.Product)
@@ -58,8 +58,72 @@ namespace SmartECommerce.Services
 
 
         //Admin
-        public async Task<IEnumerable<Order>> GetAllOrdersAsync() { return await _context.Orders.Include(o => o.OrderItems).ThenInclude(oi => oi.Product).Include(o => o.User).OrderByDescending(o => o.OrderDate).ToListAsync(); }
+        public async Task<IEnumerable<Order>> GetFilteredOrdersAsync(
+            string searchString,
+            string statusFilter,
+            string paymentMethod,
+            DateTime? fromDate,
+            DateTime? toDate,
+            string sortOrder)
+        {
+            var query = _context.Orders
+                .Include(o => o.User)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Product)
+                .Include(o => o.User.ShippingInfo)
+                .AsQueryable();
 
+            // Search by Name or order ID
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                query = query.Where(o => o.User.UserName.Contains(searchString) ||
+                    o.Id.ToString().Contains(searchString)); 
+            }
+
+            // Status filter
+            if (!string.IsNullOrEmpty(statusFilter) && statusFilter != "All")
+            {
+                if (Enum.TryParse<OrderStatus>(statusFilter, true, out var statusEnum))
+                {
+                    query = query.Where(o => o.Status == statusEnum);
+                }
+            }
+
+            // Payment method filter
+            if (!string.IsNullOrEmpty(paymentMethod) && paymentMethod != "All")
+            {
+                if (Enum.TryParse<PaymentMethod>(paymentMethod, true, out var paymentEnum))
+                {
+                    query = query.Where(o => o.PaymentMethod == paymentEnum);
+                }
+            }
+
+            // Date range filter
+            if (fromDate.HasValue)
+            {
+                query = query.Where(o => o.OrderDate >= fromDate.Value);
+            }
+
+            if (toDate.HasValue)
+            {
+                query = query.Where(o => o.OrderDate <= toDate.Value.Date.AddDays(1));
+            }
+
+            // Sorting with Pending time priority
+
+            query = sortOrder switch
+            {
+                "date_asc" => query.OrderBy(o => o.OrderDate),
+                "date_desc" => query.OrderByDescending(o => o.OrderDate),
+                "customer" => query.OrderBy(o => o.User.UserName),
+                "total" => query.OrderByDescending(o => o.TotalAmount),
+                _ => query.OrderByDescending(o => o.Status == OrderStatus.Pending ?
+                        (o.OrderDate.AddDays(30) - DateTime.UtcNow) : TimeSpan.Zero)
+                   .ThenByDescending(o => o.OrderDate)
+            };
+
+            return await query.Take(100).ToListAsync();
+        }
 
         public async Task<Order> GetOrderDetailsAdminAsync(int orderId)
         {
@@ -85,9 +149,9 @@ namespace SmartECommerce.Services
             return await _context.Orders
                 .CountAsync(o => o.OrderDate >= from
                     && o.OrderDate <= to
-                    && (o.Status == OrderStatus.Pending 
-                        || o.Status == OrderStatus.Processing 
-                        || o.Status ==OrderStatus.Completed));
+                    && (o.Status == OrderStatus.Pending
+                        || o.Status == OrderStatus.Processing
+                        || o.Status == OrderStatus.Completed));
         }
 
         public async Task<IEnumerable<SalesTrendPoint>> GetMonthlySalesTrendAsync(int months)
@@ -97,7 +161,7 @@ namespace SmartECommerce.Services
 
             var query = _context.Orders
                 .Where(o => o.OrderDate >= startDate
-                         && o.Status == OrderStatus.Completed) 
+                         && o.Status == OrderStatus.Completed)
                 .GroupBy(o => new { o.OrderDate.Year, o.OrderDate.Month })
                 .Select(g => new SalesTrendPoint
                 {
@@ -131,7 +195,7 @@ namespace SmartECommerce.Services
             var query = _context.OrderItems
                 .Include(oi => oi.Product)
                     .ThenInclude(p => p.Category)
-                .Where(oi => oi.Order.Status == OrderStatus.Completed) 
+                .Where(oi => oi.Order.Status == OrderStatus.Completed)
                 .GroupBy(oi => oi.Product.Category.Name)
                 .Select(g => new CategoryRevenue
                 {

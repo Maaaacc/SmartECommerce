@@ -12,7 +12,14 @@ namespace SmartECommerce.Interface
         Task UpdateOrderStatusAsync(int orderId, OrderStatus status);
 
         //Admin
-        Task<IEnumerable<Order>> GetAllOrdersAsync();
+        Task<IEnumerable<Order>> GetFilteredOrdersAsync(
+            string searchString, 
+            string statusFilter,
+            string paymentMethod,
+            DateTime? fromDate,
+            DateTime? toDate,
+            string sortOrder);
+
         Task<Order> GetOrderDetailsAdminAsync(int orderId);
 
         //Admin Dashboard
