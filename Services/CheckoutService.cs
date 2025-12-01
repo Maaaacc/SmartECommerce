@@ -34,8 +34,8 @@ namespace SmartECommerce.Implementation
             var order = new Order
             {
                 UserId = userId,
-                OrderDate = DateTime.UtcNow,
-                Status = OrderStatus.Pending,
+                OrderPlacedAt = DateTime.UtcNow,
+                Status = OrderStatus.OrderPlaced,
                 TotalAmount = cartItems.Sum(c => c.Product.Price * c.Quantity),
                 OrderItems = new List<OrderItem>()
             };

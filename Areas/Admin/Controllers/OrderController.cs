@@ -50,7 +50,10 @@ namespace SmartECommerce.Areas.Admin.Controllers
         public async Task<IActionResult> Details(int id)
         {
             var order = await _orderService.GetOrderDetailsAdminAsync(id);
-            if (order == null) return NotFound();
+            if (order == null)
+            {
+                return NotFound();
+            }
             return View(order);
         }
 
@@ -59,9 +62,30 @@ namespace SmartECommerce.Areas.Admin.Controllers
         public async Task<IActionResult> UpdateStatus(int id)
         {
             var order = await _orderService.GetOrderDetailsAdminAsync(id);
-            if (order == null) return NotFound();
+            if (order == null)
+            {
+                return NotFound();
+            }
 
-            ViewBag.StatusList = new SelectList(Enum.GetValues(typeof(OrderStatus)));
+            var allowedTransitions = Helpers.OrderStatusFlow.AllowedTransitions[order.Status];
+
+            var statusList = allowedTransitions
+                .Select(s => new SelectListItem
+                {
+                    Value = s.ToString(),
+                    Text = s.ToString()
+                })
+                .ToList();
+
+            statusList.Insert(0, new SelectListItem
+            {
+                Value = order.Status.ToString(),
+                Text = $"{order.Status} (current)",
+                Disabled = true
+            });
+
+            ViewBag.StatusList = statusList;
+
             return View(order);
         }
 
@@ -70,8 +94,15 @@ namespace SmartECommerce.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateStatus(int id, OrderStatus status)
         {
-            await _orderService.UpdateOrderStatusAsync(id, status);
-            TempData["SuccessMessage"] = "Order status updated successfully.";
+            try
+            {
+                await _orderService.UpdateOrderStatusAsync(id, status);
+                TempData["SuccessMessage"] = "Order status updated successfully.";
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
             return RedirectToAction(nameof(Index));
         }
     }

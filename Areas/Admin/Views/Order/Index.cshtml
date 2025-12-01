@@ -104,7 +104,7 @@ else
                            class="text-white small">↕</a>
                     </th>
                     <th>Status</th>
-                    <th>Pending Time</th>
+                    <th>Order Placed Time</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -114,13 +114,13 @@ else
                     <tr>
                         <td><strong>#@order.Id</strong></td>
                         <td>@(order.User?.UserName ?? "N/A")</td>
-                        <td>@order.OrderDate.ToLocalTime().ToString("MMM dd, yyyy hh:mm tt")</td>
+                        <td>@order.OrderPlacedAt?.ToLocalTime().ToString("MMM dd, yyyy hh:mm tt")</td>
                         <td><strong>$@order.TotalAmount.ToString("0.00")</strong></td>
                         <td>
                             @switch (order.Status)
                             {
-                                case OrderStatus.Pending:
-                                    <span class="badge bg-warning text-dark fs-6">Pending</span>
+                                case OrderStatus.OrderPlaced:
+                                    <span class="badge bg-warning text-dark fs-6">Order Placed</span>
                                     break;
                                 case OrderStatus.Processing:
                                     <span class="badge bg-info fs-6">Processing</span>
@@ -134,12 +134,32 @@ else
                             }
                         </td>
                         <td>
-                            @if (order.Status == OrderStatus.Pending)
+                            @if (order.Status == OrderStatus.OrderPlaced)
                             {
-                                var pendingDays = (DateTime.UtcNow - order.OrderDate).TotalDays;
-                                <span class="badge bg-danger">
-                                    @(pendingDays >= 7 ? "🚨 " : "")@pendingDays.ToString("F1") days
+                                var timeDiff = DateTime.UtcNow - order.OrderPlacedAt;
+                                var totalDays = (int)timeDiff?.TotalDays;
+                                var totalHours = (int)timeDiff?.TotalHours;
 
+                                string pendingText;
+
+                                if(totalDays < 1)
+                                {
+                                    pendingText = totalHours < 1 ? "Less than 1 hour" : $"{totalHours} hr{(totalHours > 1 ? "s" : "")}";
+                                }
+                                else if (totalDays < 3)
+                                {
+                                    var hoursPart = totalHours % 24;
+                                    pendingText = hoursPart == 0
+                                        ? $"{totalDays} day{(totalDays > 1 ? "s" : "")}"
+                                        : $"{totalDays} day{(totalDays > 1 ? "s" : "")} {hoursPart} hr {(hoursPart > 1 ? "s" : "")}";
+                                }
+                                else
+                                {
+                                    pendingText = $"{totalDays} day{(totalDays > 1 ? "s" : "")}";
+                                }
+
+                                <span class="badge @(totalDays >= 3 ? "bg-danger" : "bg-warning")">
+                                    @(totalDays >= 3 ? "🚨 " : "")@pendingText
                                 </span>
                             }
                             else

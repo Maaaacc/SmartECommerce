@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SmartECommerce.Data;
+using SmartECommerce.Helpers;
 using SmartECommerce.Interface;
 using SmartECommerce.Models;
 using SmartECommerce.Models.ViewModels;
@@ -13,12 +14,14 @@ namespace SmartECommerce.Services
     public class OrderService : IOrderService
     {
         private readonly AppDbContext _context;
+        private readonly OrderStatusFlow _statusFlow;
+
 
         public OrderService(AppDbContext context)
         {
             _context = context;
+            _statusFlow = new OrderStatusFlow();
         }
-
 
         public async Task<IEnumerable<Order>> GetOrdersByUserAsync(string userId, OrderStatus? status = null)
         {
@@ -26,7 +29,7 @@ namespace SmartECommerce.Services
                 .Where(o => o.UserId == userId)
                 .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.Product)
-                .OrderByDescending(o => o.OrderDate)
+                .OrderByDescending(o => o.OrderPlacedAt)
                 .AsQueryable();
 
             if (status.HasValue)
@@ -46,18 +49,50 @@ namespace SmartECommerce.Services
                 .FirstOrDefaultAsync();
         }
 
-        public async Task UpdateOrderStatusAsync(int orderId, OrderStatus status)
+        //Admin
+
+        public async Task UpdateOrderStatusAsync(int orderId, OrderStatus newStatus)
         {
             var order = await _context.Orders.FindAsync(orderId);
-            if (order != null)
+            if (order == null) return;
+
+            var previousStatus = order.Status;
+
+            if (previousStatus == newStatus)
+                throw new InvalidOperationException($"Order is already in status: {newStatus}");
+
+            if (!_statusFlow.CanChangeStatus(previousStatus, newStatus))
+                throw new InvalidOperationException($"Invalid transition: {previousStatus} → {newStatus}");
+
+            order.Status = newStatus;
+
+            switch (newStatus)
             {
-                order.Status = status;
-                await _context.SaveChangesAsync();
+                case OrderStatus.OrderPlaced:
+                    order.ProcessingAt = null;
+                    order.CompletedAt = null;
+                    order.CancelledAt = null;
+                    order.OrderPlacedAt = DateTime.UtcNow; 
+                    break;
+
+                case OrderStatus.Processing:
+                    if (previousStatus == OrderStatus.Completed)
+                        order.CompletedAt = null; 
+                    order.ProcessingAt = order.ProcessingAt ?? DateTime.UtcNow;
+                    break;
+
+                case OrderStatus.Completed:
+                    order.CompletedAt = DateTime.UtcNow; 
+                    break;
+
+                case OrderStatus.Cancelled:
+                    order.CancelledAt = DateTime.UtcNow;
+                    break;
             }
+
+            await _context.SaveChangesAsync();
         }
 
-
-        //Admin
         public async Task<IEnumerable<Order>> GetFilteredOrdersAsync(
             string searchString,
             string statusFilter,
@@ -77,7 +112,7 @@ namespace SmartECommerce.Services
             if (!string.IsNullOrEmpty(searchString))
             {
                 query = query.Where(o => o.User.UserName.Contains(searchString) ||
-                    o.Id.ToString().Contains(searchString)); 
+                    o.Id.ToString().Contains(searchString));
             }
 
             // Status filter
@@ -101,26 +136,28 @@ namespace SmartECommerce.Services
             // Date range filter
             if (fromDate.HasValue)
             {
-                query = query.Where(o => o.OrderDate >= fromDate.Value);
+                query = query.Where(o => o.OrderPlacedAt >= fromDate.Value);
             }
 
             if (toDate.HasValue)
             {
-                query = query.Where(o => o.OrderDate <= toDate.Value.Date.AddDays(1));
+                query = query.Where(o => o.OrderPlacedAt <= toDate.Value.Date.AddDays(1));
             }
 
             // Sorting with Pending time priority
 
             query = sortOrder switch
             {
-                "date_asc" => query.OrderBy(o => o.OrderDate),
-                "date_desc" => query.OrderByDescending(o => o.OrderDate),
+                "date_asc" => query.OrderBy(o => o.OrderPlacedAt),
+                "date_desc" => query.OrderByDescending(o => o.OrderPlacedAt),
                 "customer" => query.OrderBy(o => o.User.UserName),
                 "total" => query.OrderByDescending(o => o.TotalAmount),
-                _ => query.OrderByDescending(o => o.Status == OrderStatus.Pending ?
-                        (o.OrderDate.AddDays(30) - DateTime.UtcNow) : TimeSpan.Zero)
-                   .ThenByDescending(o => o.OrderDate)
+                _ => query.OrderByDescending(o => o.Status == OrderStatus.OrderPlaced ?
+                            ((o.OrderPlacedAt ?? DateTime.UtcNow).AddDays(30) - DateTime.UtcNow)
+                            : TimeSpan.Zero)
+                        .ThenByDescending(o => o.OrderPlacedAt)
             };
+
 
             return await query.Take(100).ToListAsync();
         }
@@ -138,8 +175,8 @@ namespace SmartECommerce.Services
         public async Task<decimal> GetTotalRevenueAsync(DateTime from, DateTime to)
         {
             return await _context.Orders
-                .Where(o => o.OrderDate >= from
-                    && o.OrderDate <= to
+                .Where(o => o.OrderPlacedAt >= from
+                    && o.OrderPlacedAt <= to
                     && o.Status == OrderStatus.Completed)
                 .SumAsync(o => o.TotalAmount);
         }
@@ -147,9 +184,9 @@ namespace SmartECommerce.Services
         public async Task<int> GetTotalOrdersAsync(DateTime from, DateTime to)
         {
             return await _context.Orders
-                .CountAsync(o => o.OrderDate >= from
-                    && o.OrderDate <= to
-                    && (o.Status == OrderStatus.Pending
+                .CountAsync(o => o.OrderPlacedAt >= from
+                    && o.OrderPlacedAt <= to
+                    && (o.Status == OrderStatus.OrderPlaced
                         || o.Status == OrderStatus.Processing
                         || o.Status == OrderStatus.Completed));
         }
@@ -160,9 +197,14 @@ namespace SmartECommerce.Services
             var startDate = new DateTime(now.Year, now.Month, 1).AddMonths(-months + 1);
 
             var query = _context.Orders
-                .Where(o => o.OrderDate >= startDate
+                .Where(o => o.OrderPlacedAt.HasValue
+                         && o.OrderPlacedAt.Value >= startDate
                          && o.Status == OrderStatus.Completed)
-                .GroupBy(o => new { o.OrderDate.Year, o.OrderDate.Month })
+                .GroupBy(o => new
+                {
+                    Year = o.OrderPlacedAt.Value.Year,
+                    Month = o.OrderPlacedAt.Value.Month
+                })
                 .Select(g => new SalesTrendPoint
                 {
                     Month = $"{g.Key.Month}/{g.Key.Year}",
@@ -188,6 +230,7 @@ namespace SmartECommerce.Services
 
             return fullRange;
         }
+
 
 
         public async Task<IEnumerable<CategoryRevenue>> GetRevenueByCategoryAsync()
@@ -219,13 +262,15 @@ namespace SmartECommerce.Services
         {
             return await _context.Orders
                 .Include(o => o.User)
-                .OrderByDescending(o => o.OrderDate)
+                .OrderByDescending(o => o.OrderPlacedAt)
                 .Take(count)
                 .Select(o => new RecentOrder
                 {
                     OrderId = o.Id,
                     CustomerName = o.User.UserName,
-                    Date = o.OrderDate.ToLocalTime().ToString("yyyy-MM-dd"),
+                    Date = o.OrderPlacedAt.HasValue
+                   ? o.OrderPlacedAt.Value.ToLocalTime().ToString("yyyy-MM-dd")
+                   : "N/A",
                     Total = o.TotalAmount,
                     Status = o.Status.ToString()
                 })

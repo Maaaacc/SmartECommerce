@@ -7,7 +7,7 @@ namespace SmartECommerce.Models
 {
     public enum OrderStatus
     {
-        Pending,
+        OrderPlaced,
         Processing,
         Completed,
         Cancelled
@@ -15,8 +15,6 @@ namespace SmartECommerce.Models
 
     public enum PaymentMethod
     {
-        CreditCard,
-        GCash,
         CashOnDelivery
     }
 
@@ -29,14 +27,19 @@ namespace SmartECommerce.Models
 
         public ApplicationUser? User { get; set; }
 
-        public DateTime OrderDate { get; set; }
 
         [Precision(18, 2)]
         public decimal TotalAmount { get; set; }
 
         public OrderStatus Status { get; set; }
 
-        public ICollection<OrderItem> OrderItems { get; set; }
+        public DateTime? OrderPlacedAt { get; set; }
+        public DateTime? ProcessingAt { get; set; }
+        public DateTime? CompletedAt { get; set; }
+        public DateTime? CancelledAt { get; set; }
+
+
         public PaymentMethod PaymentMethod { get; set; }
+        public ICollection<OrderItem> OrderItems { get; set; }
     }
 }

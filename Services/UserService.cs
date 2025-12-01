@@ -79,7 +79,7 @@ namespace SmartECommerce.Services
         {
             var threeMonthsAgo = DateTime.UtcNow.AddMonths(-3);
             return await _context.Orders
-                .Where(o => o.OrderDate >= threeMonthsAgo)
+                .Where(o => o.OrderPlacedAt >= threeMonthsAgo)
                 .Select(o => o.UserId)
                 .Distinct()
                 .CountAsync();
