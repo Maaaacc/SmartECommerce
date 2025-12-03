@@ -51,7 +51,7 @@ namespace SmartECommerce.Services
 
         //Admin
 
-        public async Task UpdateOrderStatusAsync(int orderId, OrderStatus newStatus)
+        public async Task UpdateOrderStatusAsync(int orderId, OrderStatus newStatus, string changedBy, bool isAdminOverride = false)
         {
             var order = await _context.Orders.FindAsync(orderId);
             if (order == null) return;
@@ -69,26 +69,40 @@ namespace SmartECommerce.Services
             switch (newStatus)
             {
                 case OrderStatus.OrderPlaced:
+                    order.OrderPlacedAt = DateTime.UtcNow; 
                     order.ProcessingAt = null;
                     order.CompletedAt = null;
                     order.CancelledAt = null;
-                    order.OrderPlacedAt = DateTime.UtcNow; 
                     break;
 
                 case OrderStatus.Processing:
-                    if (previousStatus == OrderStatus.Completed)
-                        order.CompletedAt = null; 
-                    order.ProcessingAt = order.ProcessingAt ?? DateTime.UtcNow;
+                    order.ProcessingAt = DateTime.UtcNow;
+                    order.CompletedAt = null;
+                    order.CancelledAt = null;
                     break;
 
+
                 case OrderStatus.Completed:
-                    order.CompletedAt = DateTime.UtcNow; 
+                    order.CompletedAt = DateTime.UtcNow;
+                    order.CancelledAt = null;
                     break;
 
                 case OrderStatus.Cancelled:
                     order.CancelledAt = DateTime.UtcNow;
+                    order.ProcessingAt = null;
+                    order.CompletedAt = null;
                     break;
             }
+
+            // log changes
+            _context.OrderStatusLogs.Add(new OrderStatusLog
+            {
+                OrderId = orderId,
+                PreviousStatus = previousStatus,
+                NewStatus = newStatus,
+                ChangedBy = changedBy,
+                ChangedAt = DateTime.UtcNow
+            });
 
             await _context.SaveChangesAsync();
         }
@@ -170,6 +184,15 @@ namespace SmartECommerce.Services
                 .Include(o => o.User)
                     .ThenInclude(u => u.ShippingInfo)
                 .FirstOrDefaultAsync(o => o.Id == orderId);
+        }
+
+        public async Task<List<OrderStatusLog>> GetOrderStatusLogsAsync(int orderId)
+        {
+            return await _context.OrderStatusLogs
+                .Include(l => l.Order)
+                .Where(l => l.OrderId == orderId)
+                .OrderByDescending(l => l.ChangedAt)
+                .ToListAsync();
         }
 
         public async Task<decimal> GetTotalRevenueAsync(DateTime from, DateTime to)

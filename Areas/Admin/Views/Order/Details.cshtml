@@ -4,7 +4,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h3 mb-1">Order <span class="text-primary">#@Model.Id</span></h1>
-            <p class="text-muted mb-0">Order placed on @Model.OrderPlacedAt?.ToString("MMM dd, yyyy 'at' hh:mm tt")</p>
+            <p class="text-muted mb-0">Order placed on @Model.OrderPlacedAt?.ToLocalTime().ToString("MMM dd, yyyy 'at' hh:mm tt")</p>
         </div>
         <div class="text-end">
             <span class="badge fs-5
@@ -63,7 +63,6 @@
                     {
                         <div class="row g-2">
                             <div class="col-12">
-                                <!-- Recipient Name and Phone on same line -->
                                 <div class="d-flex justify-content-between flex-wrap align-items-center mb-1">
                                     <h6 class="fw-bold mb-0">@Model.User.ShippingInfo.RecipientName</h6>
                                     <div class="d-flex align-items-center mt-1 mt-md-0">
@@ -72,7 +71,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Address Lines -->
                                 <p class="mb-1">@Model.User.ShippingInfo.AddressLine1</p>
                                 @if (!string.IsNullOrEmpty(Model.User.ShippingInfo.AddressLine2))
                                 {
@@ -100,12 +98,18 @@
     <div class="row mt-4">
         <div class="col-12">
             <div class="card shadow-sm">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Order Status Timeline</h5>
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history me-2"></i>Order Status Timeline
+                    </h5>
+
+                    <a asp-action="OrderStatusLogs" asp-route-id="@Model.Id" class="btn btn-md">
+                        <i class="bi bi-journal-text me-1"></i> View Status Logs
+                    </a>
                 </div>
+
                 <div class="card-body py-0">
                     <div class="timeline">
-                        @* Timeline items *@
                         @foreach (var step in new[] { OrderStatus.OrderPlaced, OrderStatus.Processing, OrderStatus.Completed, OrderStatus.Cancelled })
                         {
                             var hasValue = step switch

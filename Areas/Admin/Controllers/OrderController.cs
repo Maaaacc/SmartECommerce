@@ -96,7 +96,10 @@ namespace SmartECommerce.Areas.Admin.Controllers
         {
             try
             {
-                await _orderService.UpdateOrderStatusAsync(id, status);
+                var changedBy = User.Identity?.Name ?? "System";
+                var isAdminOverride = User.IsInRole("Admin");
+
+                await _orderService.UpdateOrderStatusAsync(id, status, changedBy, isAdminOverride);
                 TempData["SuccessMessage"] = "Order status updated successfully.";
             }
             catch (InvalidOperationException ex)
@@ -104,6 +107,12 @@ namespace SmartECommerce.Areas.Admin.Controllers
                 TempData["ErrorMessage"] = ex.Message;
             }
             return RedirectToAction(nameof(Index));
+        }
+
+        public async Task<IActionResult> OrderStatusLogs(int id)
+        {
+            var logs = await _orderService.GetOrderStatusLogsAsync(id);
+            return View(logs);
         }
     }
 }

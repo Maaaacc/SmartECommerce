@@ -9,7 +9,7 @@ namespace SmartECommerce.Interface
     {
         Task<IEnumerable<Order>> GetOrdersByUserAsync(string userId, OrderStatus? status);
         Task<Order> GetOrderDetailsAsync(int orderId, string userId);
-        Task UpdateOrderStatusAsync(int orderId, OrderStatus status);
+        Task UpdateOrderStatusAsync(int orderId, OrderStatus status, string changedBy, bool isAdminOverride = false);
 
         //Admin
         Task<IEnumerable<Order>> GetFilteredOrdersAsync(
@@ -20,6 +20,7 @@ namespace SmartECommerce.Interface
             DateTime? toDate,
             string sortOrder);
 
+        Task<List<OrderStatusLog>> GetOrderStatusLogsAsync(int orderId);
         Task<Order> GetOrderDetailsAdminAsync(int orderId);
 
         //Admin Dashboard

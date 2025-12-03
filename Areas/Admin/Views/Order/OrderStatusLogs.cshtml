@@ -1,0 +1,73 @@
+﻿@model IEnumerable<SmartECommerce.Models.OrderStatusLog>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="bi bi-journal-text me-2"></i>Order Status Logs
+        </h5>
+    </div>
+
+    <div class="card-body p-0">
+        @if (Model == null || !Model.Any())
+        {
+            <div class="p-4 text-center text-muted">
+                <i class="bi bi-info-circle fs-4"></i>
+                <p class="mt-2 mb-0">No status logs available for this order.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width: 120px;">Order #</th>
+                            <th style="width: 150px;">Previous Status</th>
+                            <th style="width: 150px;">New Status</th>
+                            <th style="width: 200px;"><i class="bi bi-person-circle me-1"></i>Changed By</th>
+                            <th style="width: 200px;"><i class="bi bi-clock-history me-1"></i>Changed At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var log in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="fw-bold">#@log.OrderId</span>
+                                </td>
+
+                                <td>
+                                    <span class="badge fs-6
+                                        @(log.PreviousStatus == OrderStatus.OrderPlaced ? "bg-warning text-dark" :
+                                          log.PreviousStatus == OrderStatus.Processing ? "bg-info text-white" :
+                                          log.PreviousStatus == OrderStatus.Completed ? "bg-success" :
+                                          log.PreviousStatus == OrderStatus.Cancelled ? "bg-danger text-white" : "")">
+                                        @log.PreviousStatus
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="badge fs-6
+                                        @(log.NewStatus == OrderStatus.OrderPlaced ? "bg-warning text-dark" :
+                                          log.NewStatus == OrderStatus.Processing ? "bg-info text-white" :
+                                          log.NewStatus == OrderStatus.Completed ? "bg-success" :
+                                          log.NewStatus == OrderStatus.Cancelled ? "bg-danger text-white" : "")">
+                                        @log.NewStatus
+                                    </span>
+                                </td>
+
+                                <td>
+                                    @log.ChangedBy
+                                </td>
+
+                                <td>
+                                    @log.ChangedAt.ToLocalTime().ToString("MMM dd, yyyy hh:mm tt")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

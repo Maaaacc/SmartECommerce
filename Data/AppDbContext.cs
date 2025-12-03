@@ -16,6 +16,7 @@ namespace SmartECommerce.Data
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<ShippingInfo> ShippingInfos { get; set; }
+        public DbSet<OrderStatusLog> OrderStatusLogs {  get; set; }
 
 
         // Override OnModelCreating for seed data if needed
