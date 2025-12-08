@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using SmartECommerce.Data;
 using SmartECommerce.Interface;
 using SmartECommerce.Models;
 using System;
@@ -15,16 +17,44 @@ namespace SmartECommerce.Areas.Admin.Controllers
     {
         private readonly IProductService _productService;
         private readonly ICategoryService _categoryService;
+        private readonly AppDbContext _context;
 
-        public ProductController(IProductService productService, ICategoryService categoryService)
+
+        public ProductController(IProductService productService, ICategoryService categoryService, AppDbContext context)
         {
             _productService = productService;
             _categoryService = categoryService;
+            _context = context;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(
+            string search,
+            List<int>? categories,
+            decimal? minPrice,
+            decimal? maxPrice,
+            string sortOrder)
         {
-            var products = await _productService.GetAllProductsAsync();
+            var products = await _productService.GetAllProductsAsync(search, categories, minPrice, maxPrice, sortOrder);
+
+            // Load categories for filters dropdown
+            ViewBag.Categories = new SelectList(
+                await _categoryService.GetCategoriesWithProductsAsync(), "Id", "Name");
+
+            // Filter state
+            ViewBag.SelectedCategories = categories ?? new List<int>();
+            ViewBag.MinPrice = minPrice;
+            ViewBag.MaxPrice = maxPrice;
+            ViewBag.SortOrder = sortOrder;
+            ViewBag.Search = search;
+
+            var priceRange = await _context.Products
+                .GroupBy(p => 1)
+                .Select(g => new { MinPrice = g.Min(p => p.Price), MaxPrice = g.Max(p => p.Price) })
+                .FirstOrDefaultAsync();
+
+            ViewBag.MinPriceRange = priceRange?.MinPrice ?? 0;
+            ViewBag.MaxPriceRange = priceRange?.MaxPrice ?? 1000;
+
             return View(products);
         }
 

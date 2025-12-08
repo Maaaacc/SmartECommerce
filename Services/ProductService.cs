@@ -3,37 +3,57 @@ using SmartECommerce.Data;
 using SmartECommerce.Interface;
 using SmartECommerce.Models;
 using SmartECommerce.Models.ViewModels;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Quic;
 using System.Threading.Tasks;
 
 namespace SmartECommerce.Services
 {
+    /// <summary>
+    /// Service for managing product operations such as CRUD,
+    /// filtering, and admin-specific statistics.
+    /// </summary>
     public class ProductService : IProductService
     {
         private readonly AppDbContext _context;
 
+        /// <summary>
+        /// Constructs the ProductService with the specified DbContext.
+        /// </summary>
+        /// <param name="context">Database context</param>
         public ProductService(AppDbContext context)
         {
             _context = context;
         }
 
+        /// <summary>
+        /// Gets all products with optional filtering by search term, category IDs,
+        /// price range, and sorting order. Only non-deleted products are returned.
+        /// </summary>
+        /// <param name="search">Optional search term for product name or description</param>
+        /// <param name="categoryIds">Optional list of category IDs to filter</param>
+        /// <param name="minPrice">Optional minimum price filter</param>
+        /// <param name="maxPrice">Optional maximum price filter</param>
+        /// <param name="sortOrder">Optional sort order: "price_asc", "price_desc", or default by name</param>
+        /// <returns>Filtered list of products asynchronously</returns>
         public async Task<IEnumerable<Product>> GetAllProductsAsync(
-            string search = null, 
+            string search = null,
             List<int>? categoryIds = null,
             decimal? minPrice = null,
             decimal? maxPrice = null,
             string sortOrder = null)
         {
-            var query = _context.Products.Include(p => p.Category).AsQueryable();
+            var query = _context.Products
+                .Include(p => p.Category)
+                .Where(p => p.DeletedAt == null)  // Filter out soft-deleted products
+                .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
-                query = query.Where(p => p.Name.Contains(search));
+                query = query.Where(p => p.Name.Contains(search) || p.Description.Contains(search));
 
             if (categoryIds?.Any() == true)
                 query = query.Where(p => p.CategoryId.HasValue && categoryIds.Contains(p.CategoryId.Value));
-
 
             if (minPrice.HasValue)
                 query = query.Where(p => p.Price >= minPrice.Value);
@@ -51,10 +71,24 @@ namespace SmartECommerce.Services
             return await query.ToListAsync();
         }
 
-        public async Task<Product> GetProductByIdAsync(int id)
+        /// <summary>
+        /// Retrieves a product by its ID, including its category.
+        /// Returns null if no such product or if the product is soft-deleted.
+        /// </summary>
+        /// <param name="id">Product ID</param>
+        /// <returns>Product or null asynchronously</returns>
+        public async Task<Product?> GetProductByIdAsync(int id)
         {
-            return await _context.Products.Include(p => p.Category).FirstOrDefaultAsync(p => p.Id == id);
+            return await _context.Products
+                .Include(p => p.Category)
+                .FirstOrDefaultAsync(p => p.Id == id && p.DeletedAt == null);
         }
+
+        /// <summary>
+        /// Adds a new product to the database with current timestamps.
+        /// </summary>
+        /// <param name="product">Product entity to add</param>
+        /// <returns>Task representing asynchronous operation</returns>
         public async Task AddProductAsync(Product product)
         {
             product.CreatedAt = DateTime.Now;
@@ -63,13 +97,19 @@ namespace SmartECommerce.Services
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
         }
+
+        /// <summary>
+        /// Updates an existing product's fields and timestamp.
+        /// Does nothing if the product does not exist.
+        /// </summary>
+        /// <param name="product">Product entity with updated values</param>
+        /// <returns>Task representing asynchronous operation</returns>
         public async Task UpdateProductAsync(Product product)
         {
             var existingProduct = await _context.Products.FirstOrDefaultAsync(p => p.Id == product.Id);
 
             if (existingProduct != null)
             {
-                // Update only the necessary fields
                 existingProduct.Name = product.Name;
                 existingProduct.Description = product.Description;
                 existingProduct.Price = product.Price;
@@ -78,36 +118,54 @@ namespace SmartECommerce.Services
                 existingProduct.ImageUrl = product.ImageUrl;
                 existingProduct.UpdatedAt = DateTime.Now;
 
-
                 await _context.SaveChangesAsync();
             }
         }
+
+        /// <summary>
+        /// Performs a soft delete on a product by setting DeletedAt timestamp.
+        /// Does not remove the product from the database.
+        /// </summary>
+        /// <param name="id">ID of the product to delete</param>
+        /// <returns>Task representing asynchronous operation</returns>
         public async Task DeleteProductAsync(int id)
         {
-
             var product = await _context.Products.FindAsync(id);
             if (product != null)
             {
-
                 product.DeletedAt = DateTime.Now;
-
-                _context.Products.Remove(product);
+                product.UpdatedAt = DateTime.Now;
                 await _context.SaveChangesAsync();
             }
         }
 
-        //Admin
+        // == Admin specific methods ==
 
+        /// <summary>
+        /// Counts the number of products currently in stock (stock > 0).
+        /// Only counts non-deleted products.
+        /// </summary>
+        /// <returns>Count of in-stock products asynchronously</returns>
         public async Task<int> GetProductsInStockCountAsync()
         {
-            return await _context.Products.CountAsync(p => p.Stock > 0);
+            return await _context.Products.CountAsync(p => p.Stock > 0 && p.DeletedAt == null);
         }
 
+        /// <summary>
+        /// Counts the number of products with low stock (stock <= 10).
+        /// Only counts non-deleted products.
+        /// </summary>
+        /// <returns>Count of low stock products asynchronously</returns>
         public async Task<int> GetLowStockCountAsync()
         {
-            return await _context.Products.CountAsync(p => p.Stock <= 10);
+            return await _context.Products.CountAsync(p => p.Stock <= 10 && p.DeletedAt == null);
         }
 
+        /// <summary>
+        /// Gets the top selling products by quantity sold for completed orders.
+        /// </summary>
+        /// <param name="count">Maximum number of products to return</param>
+        /// <returns>List of ProductSales objects sorted by quantity sold</returns>
         public async Task<IEnumerable<ProductSales>> GetTopSellingProductsAsync(int count)
         {
             var query = _context.OrderItems
@@ -125,10 +183,14 @@ namespace SmartECommerce.Services
             return await query.ToListAsync();
         }
 
+        /// <summary>
+        /// Gets alerts for products that have low stock (<= 10).
+        /// </summary>
+        /// <returns>List of LowStockAlert objects</returns>
         public async Task<IEnumerable<LowStockAlert>> GetLowStockAlertsAsync()
         {
             return await _context.Products
-                .Where(p => p.Stock <= 10)
+                .Where(p => p.Stock <= 10 && p.DeletedAt == null)
                 .Select(p => new LowStockAlert
                 {
                     ProductId = p.Id,
