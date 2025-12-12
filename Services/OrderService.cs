@@ -167,7 +167,7 @@ namespace SmartECommerce.Services
                 "customer" => query.OrderBy(o => o.User.UserName),
                 "total" => query.OrderByDescending(o => o.TotalAmount),
                 _ => query.OrderByDescending(o => o.Status == OrderStatus.OrderPlaced ?
-                            ((o.OrderPlacedAt ?? DateTime.UtcNow).AddDays(30) - DateTime.UtcNow)
+                            (o.OrderPlacedAt.AddDays(30) - DateTime.UtcNow)
                             : TimeSpan.Zero)
                         .ThenByDescending(o => o.OrderPlacedAt)
             };
@@ -220,13 +220,12 @@ namespace SmartECommerce.Services
             var startDate = new DateTime(now.Year, now.Month, 1).AddMonths(-months + 1);
 
             var query = _context.Orders
-                .Where(o => o.OrderPlacedAt.HasValue
-                         && o.OrderPlacedAt.Value >= startDate
+                .Where(o => o.OrderPlacedAt >= startDate
                          && o.Status == OrderStatus.Completed)
                 .GroupBy(o => new
                 {
-                    Year = o.OrderPlacedAt.Value.Year,
-                    Month = o.OrderPlacedAt.Value.Month
+                    Year = o.OrderPlacedAt.Year,
+                    Month = o.OrderPlacedAt.Month
                 })
                 .Select(g => new SalesTrendPoint
                 {
@@ -291,9 +290,7 @@ namespace SmartECommerce.Services
                 {
                     OrderId = o.Id,
                     CustomerName = o.User.UserName,
-                    Date = o.OrderPlacedAt.HasValue
-                   ? o.OrderPlacedAt.Value.ToLocalTime().ToString("yyyy-MM-dd")
-                   : "N/A",
+                    Date = o.OrderPlacedAt.ToLocalTime().ToString("yyyy-MM-dd"),
                     Total = o.TotalAmount,
                     Status = o.Status.ToString()
                 })

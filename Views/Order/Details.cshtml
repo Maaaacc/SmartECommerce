@@ -2,7 +2,7 @@
 
 <h2>Order Details</h2>
 
-<p><strong>Order Date:</strong> @Model.OrderPlacedAt?.ToLocalTime().ToString("f")</p>
+<p><strong>Order Date:</strong> @Model.OrderPlacedAt.ToLocalTime().ToString("f")</p>
 <p><strong>Status:</strong> @Model.Status</p>
 <p><strong>Total Amount:</strong> $@Model.TotalAmount</p>
 

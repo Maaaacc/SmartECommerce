@@ -31,15 +31,15 @@ namespace SmartECommerce.Models
         [Precision(18, 2)]
         public decimal TotalAmount { get; set; }
 
-        public OrderStatus Status { get; set; }
+        public OrderStatus Status { get; set; } = OrderStatus.OrderPlaced;
 
-        public DateTime? OrderPlacedAt { get; set; }
+        public DateTime OrderPlacedAt { get; set; } = DateTime.Now;
         public DateTime? ProcessingAt { get; set; }
         public DateTime? CompletedAt { get; set; }
         public DateTime? CancelledAt { get; set; }
 
 
-        public PaymentMethod PaymentMethod { get; set; }
-        public ICollection<OrderItem> OrderItems { get; set; }
+        public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.CashOnDelivery;
+        public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
     }
 }

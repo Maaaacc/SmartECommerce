@@ -60,18 +60,16 @@ namespace SmartECommerce.Controllers
             if (product == null)
                 return NotFound();
 
-            var moreProducts = await _context.Products
-                .Where(p => p.CategoryId == product.CategoryId && p.Id != id)
-                .Take(8)
-                .ToListAsync();
 
-            var model = new ProductDetailsViewModel
+            var moreProducts = await _productService.GetMoreProductAsync(product, id);
+
+            var viewModel = new ProductDetailsViewModel
             {
                 Product = product,
                 MoreProducts = moreProducts
             };
 
-            return View(model);
+            return View(viewModel);
         }
 
     }

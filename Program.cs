@@ -55,6 +55,8 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IShippingInfoService, ShippingInfoService>();
+builder.Services.AddScoped<IImageService, ImageService>();
+
 
 
 

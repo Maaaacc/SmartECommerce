@@ -113,7 +113,7 @@ else
                     <tr>
                         <td><strong>#@order.Id</strong></td>
                         <td>@(order.User?.UserName ?? "N/A")</td>
-                        <td>@order.OrderPlacedAt?.ToLocalTime().ToString("MMM dd, yyyy hh:mm tt")</td>
+                        <td>@order.OrderPlacedAt.ToLocalTime().ToString("MMM dd, yyyy hh:mm tt")</td>
                         <td><strong>$@order.TotalAmount.ToString("0.00")</strong></td>
                         <td>
                             @switch (order.Status)
@@ -136,8 +136,8 @@ else
                             @if (order.Status == OrderStatus.OrderPlaced)
                             {
                                 var timeDiff = DateTime.UtcNow - order.OrderPlacedAt;
-                                var totalDays = (int)timeDiff?.TotalDays;
-                                var totalHours = (int)timeDiff?.TotalHours;
+                                var totalDays = (int)timeDiff.TotalDays;
+                                var totalHours = (int)timeDiff.TotalHours;
 
                                 string pendingText;
 

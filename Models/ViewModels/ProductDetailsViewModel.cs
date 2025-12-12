@@ -3,6 +3,6 @@
     public class ProductDetailsViewModel
     {
         public Product Product { get; set; }
-        public IEnumerable<Product> MoreProducts { get; set; }
+        public IEnumerable<Product> MoreProducts { get; set; } = new List<Product>();
     }
 }

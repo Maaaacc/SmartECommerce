@@ -12,11 +12,13 @@ namespace SmartECommerce.Interface
             List<int>? categoryIds = null,
             decimal? minPrice = null,
             decimal? maxPrice = null,
-            string sortOrder = null);
+            string sortOrder = null,
+            string status = "active");
 
         Task<Product> GetProductByIdAsync(int id);
+        Task<List<Product>> GetMoreProductAsync(Product product, int id);
         Task AddProductAsync(Product product);
-        Task UpdateProductAsync(Product product);
+        Task UpdateProductAsync(Product product, IFormFile imageFile);
         Task DeleteProductAsync(int id);
 
         //Admin

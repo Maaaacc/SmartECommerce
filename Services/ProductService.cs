@@ -17,14 +17,16 @@ namespace SmartECommerce.Services
     public class ProductService : IProductService
     {
         private readonly AppDbContext _context;
+        private readonly IImageService _imageService;
 
         /// <summary>
         /// Constructs the ProductService with the specified DbContext.
         /// </summary>
         /// <param name="context">Database context</param>
-        public ProductService(AppDbContext context)
+        public ProductService(AppDbContext context, IImageService imageService)
         {
             _context = context;
+            _imageService = imageService;
         }
 
         /// <summary>
@@ -42,12 +44,19 @@ namespace SmartECommerce.Services
             List<int>? categoryIds = null,
             decimal? minPrice = null,
             decimal? maxPrice = null,
-            string sortOrder = null)
+            string sortOrder = null,
+            string status = "active")
         {
             var query = _context.Products
                 .Include(p => p.Category)
-                .Where(p => p.DeletedAt == null)  // Filter out soft-deleted products
                 .AsQueryable();
+
+            query = status switch
+            {
+                "inactive" => query.Where(p => !p.IsActive),
+                "all" => query,
+                _ => query.Where(p => p.IsActive)
+            };
 
             if (!string.IsNullOrWhiteSpace(search))
                 query = query.Where(p => p.Name.Contains(search) || p.Description.Contains(search));
@@ -81,7 +90,27 @@ namespace SmartECommerce.Services
         {
             return await _context.Products
                 .Include(p => p.Category)
-                .FirstOrDefaultAsync(p => p.Id == id && p.DeletedAt == null);
+                .FirstOrDefaultAsync(p => p.Id == id && p.IsActive);
+        }
+
+        public async Task<List<Product>> GetMoreProductAsync(Product product, int id)
+        {
+            if(product == null)
+            {
+                return new List<Product>();
+            }
+            var sameCategoryProducts = await _context.Products
+                .Where(p => p.CategoryId == product.CategoryId && p.Id != product.Id && p.IsActive)
+                .Take(4)
+                .ToListAsync();
+
+            var otherProducts = await _context.Products
+                .Where(p => p.CategoryId != product.CategoryId && p.Id != product.Id && p.IsActive)
+                .OrderBy(p => Guid.NewGuid())
+                .Take(8 - sameCategoryProducts.Count)
+                .ToListAsync();
+
+            return sameCategoryProducts.Concat(otherProducts).ToList();
         }
 
         /// <summary>
@@ -104,23 +133,41 @@ namespace SmartECommerce.Services
         /// </summary>
         /// <param name="product">Product entity with updated values</param>
         /// <returns>Task representing asynchronous operation</returns>
-        public async Task UpdateProductAsync(Product product)
+        public async Task UpdateProductAsync(Product product, IFormFile? imageFile = null)
         {
-            var existingProduct = await _context.Products.FirstOrDefaultAsync(p => p.Id == product.Id);
+            var existingProduct = await _context.Products
+                .FirstOrDefaultAsync(p => p.Id == product.Id);
 
-            if (existingProduct != null)
+            if (existingProduct == null)
+                throw new KeyNotFoundException($"Product with ID {product.Id} not found");
+
+            // Update main fields
+            existingProduct.Name = product.Name;
+            existingProduct.Description = product.Description;
+            existingProduct.Price = product.Price;
+            existingProduct.Stock = product.Stock;
+            existingProduct.CategoryId = product.CategoryId;
+            existingProduct.IsActive = product.IsActive;
+            existingProduct.UpdatedAt = DateTime.Now;
+
+            // Handle image upload if provided
+            if (imageFile?.Length > 0)
             {
-                existingProduct.Name = product.Name;
-                existingProduct.Description = product.Description;
-                existingProduct.Price = product.Price;
-                existingProduct.Stock = product.Stock;
-                existingProduct.CategoryId = product.CategoryId;
-                existingProduct.ImageUrl = product.ImageUrl;
-                existingProduct.UpdatedAt = DateTime.Now;
+                if (!string.IsNullOrEmpty(existingProduct.ImageUrl))
+                {
+                    await _imageService.DeleteImageAsync(existingProduct.ImageUrl, "images/products");
+                }
 
-                await _context.SaveChangesAsync();
+                var fileName = await _imageService.UploadImageAsync(imageFile, "images/products");
+                if (!string.IsNullOrEmpty(fileName))
+                {
+                    existingProduct.ImageUrl = fileName;
+                }
             }
+
+            await _context.SaveChangesAsync();
         }
+
 
         /// <summary>
         /// Performs a soft delete on a product by setting DeletedAt timestamp.

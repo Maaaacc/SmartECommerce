@@ -9,50 +9,93 @@
 <form asp-action="Edit" method="post" enctype="multipart/form-data">
     <input type="hidden" asp-for="Id" />
 
-    <div class="mb-3">
-        <label asp-for="Name" class="form-label"></label>
-        <input asp-for="Name" class="form-control" />
-        <span asp-validation-for="Name" class="text-danger"></span>
+    <!-- Product Info Section -->
+    <div class="card mb-4">
+        <div class="card-header">Product Information</div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" placeholder="Enter product name" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description" class="form-control" rows="3" placeholder="Enter product description"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Price" class="form-label"></label>
+                    <input asp-for="Price" class="form-control" placeholder="0.00" />
+                    <span asp-validation-for="Price" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Stock" class="form-label"></label>
+                    <input asp-for="Stock" class="form-control" placeholder="0" />
+                    <span asp-validation-for="Stock" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="CategoryId" class="form-label"></label>
+                <select asp-for="CategoryId" asp-items="ViewBag.CategoryList" class="form-select">
+                    <option value="">Select category</option>
+                </select>
+                <span asp-validation-for="CategoryId" class="text-danger"></span>
+            </div>
+        </div>
     </div>
-    <div class="mb-3">
-        <label asp-for="Description" class="form-label"></label>
-        <textarea asp-for="Description" class="form-control"></textarea>
-        <span asp-validation-for="Description" class="text-danger"></span>
-    </div>
-    <div class="mb-3">
-        <label asp-for="Price" class="form-label"></label>
-        <input asp-for="Price" class="form-control" />
-        <span asp-validation-for="Price" class="text-danger"></span>
-    </div>
-    <div class="mb-3">
-        <label asp-for="Stock" class="form-label"></label>
-        <input asp-for="Stock" class="form-control" />
-        <span asp-validation-for="Stock" class="text-danger"></span>
-    </div>
-    <div class="mb-3">
-        <label asp-for="CategoryId" class="form-label"></label>
-        <select asp-for="CategoryId" asp-items="ViewBag.CategoryList" class="form-select"></select>
-        <span asp-validation-for="CategoryId" class="text-danger"></span>
+    <!-- Image Section -->
+    <div class="card mb-4">
+        <div class="card-header">Product Image</div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Current Image</label> <br />
+                @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                {
+                    <img src="@Url.Content($"~/images/products/{Model.ImageUrl}")" alt="Product Image" class="img-thumbnail" style="max-height: 150px;" />
+                }
+                else
+                {
+                    <p class="text-muted">No image uploaded.</p>
+                }
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Change Image</label>
+                <input type="file" name="ImageFile" class="form-control" />
+            </div>
+        </div>
     </div>
 
-    <div class="mb-3">
-        <label>Current Image</label> <br />
-        @if (!string.IsNullOrEmpty(Model.ImageUrl))
-        {
-            <img src="@Url.Content($"~/images/products/{Model.ImageUrl}")" alt="Product Image" style="max-height: 150px;" />
-        }
-        else
-        {
-            <p>No image uploaded.</p>
-        }
+    <!-- Status Section -->
+    <div class="card mb-4">
+        <div class="card-header">Product Status</div>
+        <div class="card-body">
+            <div class="form-check form-check-inline">
+                <label class="form-check-label">
+                    <input type="radio" asp-for="IsActive" value="True" class="form-check-input" /> Active
+                </label>
+            </div>
+
+            <div class="form-check form-check-inline">
+                <label class="form-check-label">
+                    <input type="radio" asp-for="IsActive" value="False" class="form-check-input" /> Inactive
+                </label>
+            </div>
+
+            <span asp-validation-for="IsActive" class="text-danger d-block mt-1"></span>
+        </div>
     </div>
 
-    <div class="mb-3">
-        <label class="form-label">Change Image</label>
-        <input type="file" name="ImageFile" class="form-control" />
+    <!-- Submit Buttons -->
+    <div class="d-flex justify-content-end">
+        <a asp-action="Index" class="btn btn-secondary me-2">Cancel</a>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
     </div>
 
-    <button type="submit" class="btn btn-primary">Save</button>
 </form>
 
 @section Scripts {

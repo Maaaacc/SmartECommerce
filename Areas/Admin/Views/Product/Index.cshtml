@@ -6,6 +6,7 @@
     var minPrice = ViewBag.MinPrice as decimal?;
     var maxPrice = ViewBag.MaxPrice as decimal?;
     var sortOrder = ViewBag.SortOrder as string ?? "";
+    var status = ViewBag.Status as string ?? "";
     var minPriceRange = (decimal)(ViewBag.MinPriceRange ?? 0);
     var maxPriceRange = (decimal)(ViewBag.MaxPriceRange ?? 1000);
 }
@@ -33,6 +34,13 @@
                     <option value="" selected="@(string.IsNullOrEmpty(sortOrder) ? "selected" : "")">Name</option>
                     <option value="price_asc" selected="@(sortOrder == "price_asc" ? "selected" : "")">Price: Low to High</option>
                     <option value="price_desc" selected="@(sortOrder == "price_desc" ? "selected" : "")">Price: High to Low</option>
+                </select>
+
+                <label for="status" class="mb-0">Status: </label>
+                <select name="status" id="status" class="form-select form-select-sm" style="width: 150px;" onchange="this.form.submit()" >
+                    <option value="active" selected="@(ViewBag.Status == "active" ? "selected" : "")">Active</option>
+                    <option value="inactive" selected="@(ViewBag.Status == "inactive" ? "selected" : "")">Inactive</option>
+                    <option value="all" selected="@(ViewBag.Status == "all" ? "selected" : "")">All</option>
                 </select>
             </form>
 

@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using SmartECommerce.Data;
 using SmartECommerce.Interface;
 using SmartECommerce.Models;
+using SmartECommerce.Models.ViewModels;
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -32,9 +33,10 @@ namespace SmartECommerce.Areas.Admin.Controllers
             List<int>? categories,
             decimal? minPrice,
             decimal? maxPrice,
-            string sortOrder)
+            string sortOrder,
+            string status = "active")
         {
-            var products = await _productService.GetAllProductsAsync(search, categories, minPrice, maxPrice, sortOrder);
+            var products = await _productService.GetAllProductsAsync(search, categories, minPrice, maxPrice, sortOrder, status);
 
             // Load categories for filters dropdown
             ViewBag.Categories = new SelectList(
@@ -46,6 +48,7 @@ namespace SmartECommerce.Areas.Admin.Controllers
             ViewBag.MaxPrice = maxPrice;
             ViewBag.SortOrder = sortOrder;
             ViewBag.Search = search;
+            ViewBag.Status = status;
 
             var priceRange = await _context.Products
                 .GroupBy(p => 1)
@@ -111,36 +114,30 @@ namespace SmartECommerce.Areas.Admin.Controllers
         {
             if (id != product.Id) return BadRequest();
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                if (ImageFile != null && ImageFile.Length > 0)
-                {
-                    var fileName = Guid.NewGuid() + Path.GetExtension(ImageFile.FileName);
-                    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/products", fileName);
-
-                    Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
-
-                    using (var stream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await ImageFile.CopyToAsync(stream);
-                    }
-
-                    product.ImageUrl = fileName;
-                }
-                else
-                {
-                    var existingProduct = await _productService.GetProductByIdAsync(id);
-                    if (existingProduct != null)
-                        product.ImageUrl = existingProduct.ImageUrl;
-                }
-
-                await _productService.UpdateProductAsync(product);
-                TempData["SuccessMessage"] = "Product updated successfully";
-                return RedirectToAction(nameof(Index));
+                ViewBag.CategoryList = new SelectList(await _categoryService.GetAllCategoriesAsync(), "Id", "Name", product.CategoryId);
+                return View(product);
             }
 
-            ViewBag.CategoryList = new SelectList(await _categoryService.GetAllCategoriesAsync(), "Id", "Name", product.CategoryId);
-            return View(product);
+            try
+            {
+                await _productService.UpdateProductAsync(product, ImageFile);
+                TempData["SuccessMessage"] = "Product updated successfully!";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "An error occurred while updating the product.";
+                ViewBag.CategoryList = new SelectList(await _categoryService.GetAllCategoriesAsync(), "Id", "Name", product.CategoryId);
+                return View(product);
+            }
+
         }
 
         public async Task<IActionResult> Delete(int id)
@@ -158,6 +155,25 @@ namespace SmartECommerce.Areas.Admin.Controllers
             await _productService.DeleteProductAsync(id);
             TempData["SuccessMessage"] = "Product deleted successfully";
             return RedirectToAction(nameof(Index));
+        }
+
+        // GET: Amin/Product/Details/{id}
+        public async Task<IActionResult> Details(int id)
+        {
+            var product = await _productService.GetProductByIdAsync(id);
+            if (product == null)
+                return NotFound();
+
+
+            var moreProducts = await _productService.GetMoreProductAsync(product, id);
+
+            var viewModel = new ProductDetailsViewModel
+            {
+                Product = product,
+                MoreProducts = moreProducts
+            };
+
+            return View(viewModel);
         }
     }
 }
